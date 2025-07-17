@@ -9,6 +9,7 @@ import {
   TrendingUp,
   TrendingDown,
   Filter,
+  BarChart3,
 } from 'lucide-react';
 
 import { Trade, ColumnVisibility } from '@/lib/types';
@@ -27,6 +28,7 @@ import { DataTable } from './data-table';
 import { allColumns, defaultVisibleColumns } from './columns';
 import { ColumnSelector } from './column-selector';
 import { FilterSelector, FilterState } from './filter-selector';
+import { DataVisualizationPanel } from './data-visualization-panel';
 import { applyFilters, getFilterSummary } from '@/lib/filter-utils';
 import rawTrades from '@/app/xceler_eodservice_publisheddata (1).json';
 
@@ -186,6 +188,7 @@ export function DashboardClient() {
   const [isMounted, setIsMounted] = React.useState(false);
   const [columnVisibility, setColumnVisibility] = React.useState<ColumnVisibility>({});
   const [filters, setFilters] = React.useState<FilterState>({});
+  const [isVisualizationOpen, setIsVisualizationOpen] = React.useState(false);
 
   React.useEffect(() => {
     setIsMounted(true);
@@ -424,6 +427,14 @@ export function DashboardClient() {
                         columnVisibility={columnVisibility}
                         onColumnVisibilityChange={setColumnVisibility}
                     />
+                    <Button 
+                        onClick={() => setIsVisualizationOpen(true)} 
+                        variant="outline"
+                        className="bg-gradient-to-r from-blue-500 to-purple-600 text-white border-0 hover:from-blue-600 hover:to-purple-700"
+                    >
+                        <BarChart3 className="mr-2 h-4 w-4" />
+                        Visual Representation
+                    </Button>
                     <Button onClick={exportToCSV} variant="outline">
                         <Download className="mr-2 h-4 w-4" />
                         Export CSV
@@ -442,6 +453,13 @@ export function DashboardClient() {
             </div>
         </CardContent>
       </Card>
+
+      {/* Data Visualization Panel */}
+      <DataVisualizationPanel
+        data={filteredTrades}
+        isVisible={isVisualizationOpen}
+        onClose={() => setIsVisualizationOpen(false)}
+      />
 
     </div>
   );
