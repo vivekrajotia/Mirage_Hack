@@ -26,6 +26,8 @@ import { PnlChart } from './pnl-chart';
 import { DataTable } from './data-table';
 import { allColumns, defaultVisibleColumns } from './columns';
 import { ColumnSelector } from './column-selector';
+import { FilterSelector, FilterState } from './filter-selector';
+import { applyFilters, getFilterSummary } from '@/lib/filter-utils';
 import rawTrades from '@/app/xceler_eodservice_publisheddata (1).json';
 
 // Map raw data to Trade interface
@@ -175,6 +177,7 @@ const tradesData = rawTrades.map(trade => ({
 })) as Trade[];
 
 const STORAGE_KEY = 'trade-table-column-visibility';
+const FILTER_STORAGE_KEY = 'trade-table-filters';
 
 export function DashboardClient() {
   const [trades, setTrades] = React.useState<Trade[]>(tradesData);
@@ -182,6 +185,7 @@ export function DashboardClient() {
   const [tradeType, setTradeType] = React.useState('All');
   const [isMounted, setIsMounted] = React.useState(false);
   const [columnVisibility, setColumnVisibility] = React.useState<ColumnVisibility>({});
+  const [filters, setFilters] = React.useState<FilterState>({});
 
   React.useEffect(() => {
     setIsMounted(true);
@@ -199,7 +203,8 @@ export function DashboardClient() {
         console.error('Error parsing saved column visibility:', error);
         // Set default visibility
         const defaultVisibility = allColumns.reduce((acc, col) => {
-          acc[col.accessorKey as string] = defaultVisibleColumns.includes(col.accessorKey as string);
+          const key = (col as any).accessorKey as string;
+          acc[key] = defaultVisibleColumns.includes(key);
           return acc;
         }, {} as ColumnVisibility);
         setColumnVisibility(defaultVisibility);
@@ -207,10 +212,21 @@ export function DashboardClient() {
     } else {
       // Set default visibility
       const defaultVisibility = allColumns.reduce((acc, col) => {
-        acc[col.accessorKey as string] = defaultVisibleColumns.includes(col.accessorKey as string);
+        const key = (col as any).accessorKey as string;
+        acc[key] = defaultVisibleColumns.includes(key);
         return acc;
       }, {} as ColumnVisibility);
       setColumnVisibility(defaultVisibility);
+    }
+
+    // Load filters from localStorage
+    const savedFilters = localStorage.getItem(FILTER_STORAGE_KEY);
+    if (savedFilters) {
+      try {
+        setFilters(JSON.parse(savedFilters));
+      } catch (error) {
+        console.error('Error parsing saved filters:', error);
+      }
     }
   }, []);
 
@@ -219,7 +235,8 @@ export function DashboardClient() {
         return trades;
     }
 
-    return trades.filter((trade) => {
+    // Apply basic date and type filters first
+    let filtered = trades.filter((trade) => {
       const tradeDate = new Date(trade.trade_date_time);
       const isDateInRange =
         (!date?.from || tradeDate >= date.from) &&
@@ -229,7 +246,12 @@ export function DashboardClient() {
         (tradeType === 'Sell' && trade.trade_transaction_type === 1);
       return isDateInRange && isTypeMatch;
     });
-  }, [trades, date, tradeType, isMounted]);
+
+    // Apply advanced filters
+    filtered = applyFilters(filtered, filters);
+
+    return filtered;
+  }, [trades, date, tradeType, filters, isMounted]);
 
   const totalPnl = React.useMemo(() => {
     return filteredTrades.reduce((acc, trade) => acc + trade.mtm_pnl, 0);
@@ -243,21 +265,31 @@ export function DashboardClient() {
 
   // Filter columns based on visibility
   const visibleColumns = React.useMemo(() => {
-    return allColumns.filter(column => columnVisibility[column.accessorKey as string]);
+    return allColumns.filter(column => columnVisibility[(column as any).accessorKey as string]);
   }, [columnVisibility]);
 
+  // Handle filter changes and save to localStorage
+  const handleFiltersChange = (newFilters: FilterState) => {
+    setFilters(newFilters);
+    if (Object.keys(newFilters).length > 0) {
+      localStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify(newFilters));
+    } else {
+      localStorage.removeItem(FILTER_STORAGE_KEY);
+    }
+  };
+
   const exportToCSV = () => {
-    const visibleColumnKeys = visibleColumns.map(col => col.accessorKey as string);
+    const visibleColumnKeys = visibleColumns.map(col => (col as any).accessorKey as string);
     const headers = visibleColumns.map(col => {
       if (typeof col.header === 'string') {
         return col.header;
       } else if (typeof col.header === 'function') {
         // For complex headers, use the accessor key formatted
-        return (col.accessorKey as string).split('_').map(word => 
+        return ((col as any).accessorKey as string).split('_').map(word => 
           word.charAt(0).toUpperCase() + word.slice(1)
         ).join(' ');
       }
-      return col.accessorKey as string;
+      return (col as any).accessorKey as string;
     });
 
     const csvContent = [
@@ -383,6 +415,11 @@ export function DashboardClient() {
                     </Select>
                 </div>
                 <div className="flex gap-2">
+                    <FilterSelector 
+                        data={tradesData}
+                        filters={filters}
+                        onFiltersChange={handleFiltersChange}
+                    />
                     <ColumnSelector 
                         columnVisibility={columnVisibility}
                         onColumnVisibilityChange={setColumnVisibility}
@@ -393,6 +430,13 @@ export function DashboardClient() {
                     </Button>
                 </div>
             </div>
+            {Object.keys(filters).length > 0 && (
+                <div className="mt-2 p-2 bg-muted rounded-md">
+                    <div className="text-sm text-muted-foreground">
+                        <strong>Active Filters:</strong> {getFilterSummary(filters)}
+                    </div>
+                </div>
+            )}
             <div className="mt-4">
                 <DataTable columns={visibleColumns} data={filteredTrades} />
             </div>
