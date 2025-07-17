@@ -30,6 +30,7 @@ import { ColumnSelector } from './column-selector';
 import { FilterSelector, FilterState } from './filter-selector';
 import { DataVisualizationPanel } from './data-visualization-panel';
 import { applyFilters, getFilterSummary } from '@/lib/filter-utils';
+import AIInsightsOverlay from '../ai-insights-overlay';
 import rawTrades from '@/app/xceler_eodservice_publisheddata (1).json';
 
 // Map raw data to Trade interface
@@ -459,6 +460,14 @@ export function DashboardClient() {
         data={filteredTrades}
         isVisible={isVisualizationOpen}
         onClose={() => setIsVisualizationOpen(false)}
+      />
+
+      {/* AI Insights Overlay */}
+      <AIInsightsOverlay
+        dashboardData={filteredTrades}
+        filters={filters}
+        dateRange={date ? { from: date.from || null, to: date.to || null } : { from: null, to: null }}
+        onFiltersChange={handleFiltersChange}
       />
 
     </div>
