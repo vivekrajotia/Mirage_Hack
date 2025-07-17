@@ -1,0 +1,1 @@
+dataset_file: /path/to/your/project/xceler_eodservice_publisheddata (1).json # Specifies the default dataset file. Can be easily integrated with an API later.
