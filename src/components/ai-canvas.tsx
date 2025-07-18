@@ -624,7 +624,7 @@ The chart visualizes ${graphRequest.yAxis?.join(', ') || 'key metrics'} across $
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-[75vh]">
           {/* Left Panel - Data & Search */}
-          <div className="space-y-4">
+          <div className="space-y-4 h-full overflow-hidden">
             {/* Search Bar */}
             <Card>
               <CardHeader className="pb-2">
@@ -726,7 +726,7 @@ The chart visualizes ${graphRequest.yAxis?.join(', ') || 'key metrics'} across $
           </div>
 
           {/* Right Panel - AI Chat & Visualization */}
-          <div className="lg:col-span-2 space-y-4">
+          <div className="lg:col-span-2 space-y-4 h-full overflow-hidden">
             {/* Chat Interface */}
             <Card className="flex flex-col h-full">
               <CardHeader className="pb-2 flex-shrink-0">
@@ -738,9 +738,9 @@ The chart visualizes ${graphRequest.yAxis?.join(', ') || 'key metrics'} across $
                   </Badge>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="flex flex-col flex-1 space-y-4">
+              <CardContent className="flex flex-col flex-1 p-0 overflow-hidden">
                 {/* Chat Messages */}
-                <ScrollArea className="flex-1 pr-4">
+                <ScrollArea className="flex-1 px-6 py-4" style={{ height: 'calc(75vh - 180px)' }}>
                   <div className="space-y-4">
                     {chatMessages.length === 0 && (
                       <div className="text-center py-8 text-muted-foreground">
