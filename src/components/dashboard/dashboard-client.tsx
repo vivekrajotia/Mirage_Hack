@@ -10,6 +10,9 @@ import {
   TrendingDown,
   Filter,
   BarChart3,
+  Mail,
+  Send,
+  Loader2,
 } from 'lucide-react';
 
 import { Trade, ColumnVisibility } from '@/lib/types';
@@ -190,6 +193,7 @@ export function DashboardClient() {
   const [columnVisibility, setColumnVisibility] = React.useState<ColumnVisibility>({});
   const [filters, setFilters] = React.useState<FilterState>({});
   const [isVisualizationOpen, setIsVisualizationOpen] = React.useState(false);
+  const [isSendingInsights, setIsSendingInsights] = React.useState(false);
 
   React.useEffect(() => {
     setIsMounted(true);
@@ -320,12 +324,85 @@ export function DashboardClient() {
     document.body.removeChild(link);
   };
 
+  const sendInsightsEmail = async () => {
+    if (!filteredTrades.length) {
+      alert('No data available to analyze');
+      return;
+    }
+
+    setIsSendingInsights(true);
+    try {
+      // Generate AI insights first
+      const { AIInsightsService } = await import('@/lib/ai-insights-service');
+      const contextInfo = {
+        dashboardType: 'Trading Dashboard',
+        dateRange: date ? { from: date.from || null, to: date.to || null } : { from: null, to: null },
+        filters,
+        dataCount: filteredTrades.length,
+        widgetTitle: `Dashboard Analysis - ${filteredTrades.length} trades`,
+        timeSeriesData: filteredTrades,
+        chartData: filteredTrades
+      };
+
+      const insights = await AIInsightsService.generateInsights(filteredTrades, contextInfo);
+      
+      // Send email with insights
+      const emailResponse = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'insights',
+          insights,
+          recipientEmail: 'subhamnaskar671@gmail.com',
+          dataCount: filteredTrades.length,
+          dateRange: date ? `${date.from?.toLocaleDateString()} - ${date.to?.toLocaleDateString()}` : 'All time',
+          filters: Object.keys(filters).length > 0 ? getFilterSummary(filters) : 'No filters applied'
+        }),
+      });
+
+      if (emailResponse.ok) {
+        alert('AI insights sent successfully to subhamnaskar671@gmail.com!');
+      } else {
+        throw new Error('Failed to send email');
+      }
+    } catch (error) {
+      console.error('Error sending insights:', error);
+      alert('Failed to send insights. Please try again.');
+    } finally {
+      setIsSendingInsights(false);
+    }
+  };
+
   if (!isMounted) {
     return null; // Or a loading spinner
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 relative">
+      {/* Send Insights Button - Top Right */}
+      <div className="fixed top-4 right-4 z-50">
+        <Button
+          onClick={sendInsightsEmail}
+          disabled={isSendingInsights || !filteredTrades.length}
+          className="bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+          size="lg"
+        >
+          {isSendingInsights ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Sending...
+            </>
+          ) : (
+            <>
+              <Send className="h-4 w-4 mr-2" />
+              Send Insights
+            </>
+          )}
+        </Button>
+      </div>
+
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
