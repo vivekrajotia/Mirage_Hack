@@ -689,36 +689,38 @@ The chart visualizes ${graphRequest.yAxis?.join(', ') || 'key metrics'} across $
                     {isTableOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                   </CollapsibleTrigger>
                   <CollapsibleContent>
-                    <ScrollArea className="h-60 mt-2">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            {selectedColumns.map(column => (
-                              <TableHead key={column} className="text-xs whitespace-nowrap">
-                                {getColumnDisplayName(column)}
-                              </TableHead>
-                            ))}
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {filteredData.slice(0, 100).map((trade, index) => (
-                            <TableRow key={index}>
+                    <div className="h-60 mt-2 border rounded-md overflow-auto">
+                      <div className="min-w-max">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
                               {selectedColumns.map(column => (
-                                <TableCell key={column} className="text-xs">
-                                  {column === 'mtm_pnl' && trade[column] !== undefined ? (
-                                    <span className={trade[column] >= 0 ? 'text-green-600' : 'text-red-600'}>
-                                      ₹{trade[column].toFixed(2)}
-                                    </span>
-                                  ) : (
-                                    String(trade[column as keyof Trade] || '-')
-                                  )}
-                                </TableCell>
+                                <TableHead key={column} className="text-xs whitespace-nowrap min-w-[120px]">
+                                  {getColumnDisplayName(column)}
+                                </TableHead>
                               ))}
                             </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </ScrollArea>
+                          </TableHeader>
+                          <TableBody>
+                            {filteredData.slice(0, 100).map((trade, index) => (
+                              <TableRow key={index}>
+                                {selectedColumns.map(column => (
+                                  <TableCell key={column} className="text-xs whitespace-nowrap min-w-[120px]">
+                                    {column === 'mtm_pnl' && trade[column] !== undefined ? (
+                                      <span className={trade[column] >= 0 ? 'text-green-600' : 'text-red-600'}>
+                                        ₹{trade[column].toFixed(2)}
+                                      </span>
+                                    ) : (
+                                      String(trade[column as keyof Trade] || '-')
+                                    )}
+                                  </TableCell>
+                                ))}
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </div>
                   </CollapsibleContent>
                 </Collapsible>
               </CardHeader>
