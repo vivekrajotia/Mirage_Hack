@@ -344,21 +344,16 @@ export function DashboardClient() {
         chartData: filteredTrades
       };
 
-      const insights = await AIInsightsService.generateInsights(filteredTrades, contextInfo);
-      
+      const reportText = await AIInsightsService.generateInsights(filteredTrades, contextInfo);
+
       // Send email with insights
       const emailResponse = await fetch('/api/send-email', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          type: 'insights',
-          insights,
-          recipientEmail: 'subhamnaskar671@gmail.com',
-          dataCount: filteredTrades.length,
-          dateRange: date ? `${date.from?.toLocaleDateString()} - ${date.to?.toLocaleDateString()}` : 'All time',
-          filters: Object.keys(filters).length > 0 ? getFilterSummary(filters) : 'No filters applied'
+          name: 'AI Insights Bot',
+          email: 'subhamnaskar671@gmail.com',
+          message: reportText
         }),
       });
 
