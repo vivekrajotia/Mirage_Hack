@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import '../components/ai-canvas-button.css';
 import {
   SidebarProvider,
   Sidebar,
@@ -17,10 +18,15 @@ import {
   BarChart2,
   Settings,
   CircleHelp,
+  Bot,
+  Sparkles,
 } from 'lucide-react';
 import { DashboardClient } from '@/components/dashboard/dashboard-client';
+import { AICanvas } from '@/components/ai-canvas';
 
 export default function DashboardPage() {
+  const [isAICanvasOpen, setIsAICanvasOpen] = React.useState(false);
+
   return (
     <SidebarProvider>
       <Sidebar>
@@ -36,6 +42,21 @@ export default function DashboardPage() {
               <SidebarMenuButton isActive tooltip="Dashboard">
                 <LayoutDashboard />
                 Dashboard
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton 
+                tooltip="AI Canvas - Intelligent Data Analysis"
+                onClick={() => setIsAICanvasOpen(true)}
+                className="ai-canvas-button text-white border-0 w-full"
+              >
+                <div className="flex items-center gap-2 relative z-10 w-full">
+                  <div className="relative flex-shrink-0">
+                    <Bot className="h-4 w-4 bot-icon" />
+                    <Sparkles className="h-3 w-3 absolute -top-1 -right-1 sparkle-icon text-yellow-300" />
+                  </div>
+                  <span className="button-text flex-grow text-left">AI CANVAS</span>
+                </div>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
@@ -67,6 +88,12 @@ export default function DashboardPage() {
           <DashboardClient />
         </main>
       </SidebarInset>
+      
+      {/* AI Canvas Modal */}
+      <AICanvas 
+        isOpen={isAICanvasOpen} 
+        onClose={() => setIsAICanvasOpen(false)} 
+      />
     </SidebarProvider>
   );
 }
