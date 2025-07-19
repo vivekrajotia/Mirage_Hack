@@ -57,6 +57,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { DashboardClient } from '@/components/dashboard/dashboard-client';
 import { AICanvas } from '@/components/ai-canvas';
+import ReportsPage from '@/components/reports-page';
 
 const DashboardPage: React.FC = () => {
   const [isAICanvasOpen, setIsAICanvasOpen] = React.useState(false);
@@ -247,16 +248,20 @@ const DashboardPage: React.FC = () => {
               <SidebarTrigger className="hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200" />
               <div className="flex flex-col">
                 <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                  Welcome to TradeVision
+                  {activeItem === 'reports' ? 'Reports Center' : 'Welcome to TradeVision'}
                 </h1>
                 <p className="text-sm text-slate-600 dark:text-slate-400">
-                  Your comprehensive trading analytics dashboard
+                  {activeItem === 'reports' 
+                    ? 'Generate custom reports and AI-powered insights' 
+                    : 'Your comprehensive trading analytics dashboard'
+                  }
                 </p>
               </div>
             </div>
 
-            {/* Action Toolbar */}
-            <div className="flex items-center gap-2">
+            {/* Action Toolbar - Only show for dashboard */}
+            {activeItem !== 'reports' && (
+              <div className="flex items-center gap-2">
               {/* Quick Actions Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -355,10 +360,17 @@ const DashboardPage: React.FC = () => {
                 </TooltipContent>
               </Tooltip>
             </div>
+            )}
           </header>
 
-          <main className="flex-1 overflow-auto p-6">
-            <DashboardClient ref={setDashboardRef} />
+          <main className="flex-1 overflow-auto">
+            {activeItem === 'reports' ? (
+              <ReportsPage />
+            ) : (
+              <div className="p-6">
+                <DashboardClient ref={setDashboardRef} />
+              </div>
+            )}
           </main>
         </SidebarInset>
         
