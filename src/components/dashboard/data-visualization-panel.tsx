@@ -32,7 +32,6 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { Separator } from '@/components/ui/separator';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   BarChart3,
@@ -57,6 +56,7 @@ import {
 import ReactECharts from 'echarts-for-react';
 import * as echarts from 'echarts';
 import { Trade } from '@/lib/types';
+import ToastBanner from '../toast-banner';
 
 // Types
 interface ColumnInfo {
@@ -979,12 +979,7 @@ export function DataVisualizationPanel({ data, isVisible, onClose }: DataVisuali
 
     if (processedData.length === 0) {
       return (
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            No data available for the selected fields and filters.
-          </AlertDescription>
-        </Alert>
+        <ToastBanner type="info" message="No data available for the selected fields and filters." />
       );
     }
 
@@ -992,12 +987,7 @@ export function DataVisualizationPanel({ data, isVisible, onClose }: DataVisuali
     
     if (!option) {
       return (
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Unable to generate chart configuration. Please check your field selections.
-          </AlertDescription>
-        </Alert>
+        <ToastBanner type="warning" message="Unable to generate chart configuration. Please check your field selections." />
       );
     }
 
@@ -1304,12 +1294,7 @@ export function DataVisualizationPanel({ data, isVisible, onClose }: DataVisuali
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {error && (
-                  <Alert className="mb-4">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                )}
+                {error && <ToastBanner type="error" message={error} onClose={() => setError(null)} />}
                 {renderChart()}
               </CardContent>
             </Card>

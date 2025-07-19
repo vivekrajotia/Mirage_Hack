@@ -48,8 +48,9 @@ import { DataVisualizationPanel } from './data-visualization-panel';
 import { applyFilters, getFilterSummary } from '@/lib/filter-utils';
 import AIInsightsOverlay from '../ai-insights-overlay';
 import { Widget, WidgetLayout, WidgetManager, DEFAULT_WIDGETS } from '@/lib/widget-config';
-import { MetricWidget, ChartWidget, WidgetSettings } from './widgets';
+import { MetricWidget, ChartWidget, WidgetSettings, SimpleResizableGrid } from './widgets';
 import rawTrades from '@/app/xceler_eodservice_publisheddata (1).json';
+import ToastBanner from '../toast-banner';
 
 // Map raw data to Trade interface
 const tradesData = rawTrades.map(trade => ({
@@ -218,6 +219,7 @@ export const DashboardClient = React.forwardRef<DashboardClientHandle, {}>((prop
   const [widgetLayout, setWidgetLayout] = React.useState<WidgetLayout>({ widgets: DEFAULT_WIDGETS, lastUpdated: Date.now() });
   const [draggedWidget, setDraggedWidget] = React.useState<string | null>(null);
   const [isDragOver, setIsDragOver] = React.useState<string | null>(null);
+  const [banner, setBanner] = React.useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   
   // Collapsible states
   const [isMetricWidgetsCollapsed, setIsMetricWidgetsCollapsed] = React.useState(false);
@@ -358,7 +360,7 @@ export const DashboardClient = React.forwardRef<DashboardClientHandle, {}>((prop
 
   const sendInsightsEmail = React.useCallback(async () => {
     if (!filteredTrades.length) {
-      alert('No data available to analyze');
+      setBanner({ type: 'info', message: 'No data available to analyze' });
       return;
     }
 
@@ -390,13 +392,13 @@ export const DashboardClient = React.forwardRef<DashboardClientHandle, {}>((prop
       });
 
       if (emailResponse.ok) {
-        alert('AI insights sent successfully to subhamnaskar671@gmail.com!');
+        setBanner({ type: 'success', message: 'AI insights sent successfully to subhamnaskar671@gmail.com!' });
       } else {
         throw new Error('Failed to send email');
       }
     } catch (error) {
       console.error('Error sending insights:', error);
-      alert('Failed to send insights. Please try again.');
+      setBanner({ type: 'error', message: 'Failed to send insights. Please try again.' });
     } finally {
       setIsSendingInsights(false);
     }
@@ -522,7 +524,7 @@ export const DashboardClient = React.forwardRef<DashboardClientHandle, {}>((prop
             </CollapsibleTrigger>
           </div>
           <CollapsibleContent className="space-y-4">
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <SimpleResizableGrid className="h-auto">
               {visibleMetricWidgets.map((widget) => {
                 let value: string | number = '';
                 let subtitle = '';
@@ -564,7 +566,7 @@ export const DashboardClient = React.forwardRef<DashboardClientHandle, {}>((prop
                   />
                 );
               })}
-            </div>
+            </SimpleResizableGrid>
           </CollapsibleContent>
         </Collapsible>
       )}
@@ -591,7 +593,7 @@ export const DashboardClient = React.forwardRef<DashboardClientHandle, {}>((prop
             </CollapsibleTrigger>
           </div>
           <CollapsibleContent className="space-y-4">
-            <div className="grid gap-6 lg:grid-cols-2">
+            <SimpleResizableGrid className="h-auto">
               {visibleChartWidgets.map((widget) => {
                 let chartContent: React.ReactNode = null;
                 
@@ -901,7 +903,7 @@ export const DashboardClient = React.forwardRef<DashboardClientHandle, {}>((prop
                   </ChartWidget>
                 );
               })}
-            </div>
+            </SimpleResizableGrid>
           </CollapsibleContent>
         </Collapsible>
       )}
@@ -1054,6 +1056,9 @@ export const DashboardClient = React.forwardRef<DashboardClientHandle, {}>((prop
         dateRange={date ? { from: date.from || null, to: date.to || null } : { from: null, to: null }}
         onFiltersChange={handleFiltersChange}
       />
+
+      {/* Render ToastBanner if banner is set */}
+      {banner && <ToastBanner type={banner.type} message={banner.message} onClose={() => setBanner(null)} />}
 
     </div>
   );

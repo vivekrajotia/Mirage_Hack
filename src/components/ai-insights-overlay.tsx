@@ -6,7 +6,6 @@ import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
-import { Alert, AlertDescription } from './ui/alert';
 import { ScrollArea } from './ui/scroll-area';
 import { Separator } from './ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
@@ -16,6 +15,7 @@ import { Trade } from '@/lib/types';
 import { FilterState } from './dashboard/filter-selector';
 import { AIInsightsService } from '@/lib/ai-insights-service';
 import './ai-insights-button.css';
+import ToastBanner from './toast-banner';
 
 interface AIInsightsOverlayProps {
   dashboardData: Trade[];
@@ -367,15 +367,7 @@ export const AIInsightsOverlay: React.FC<AIInsightsOverlayProps> = ({
                   )}
 
                   {error && (
-                    <Alert className="mb-4">
-                      <AlertDescription className="flex items-center justify-between">
-                        <span>{error}</span>
-                        <Button onClick={retryGeneration} variant="outline" size="sm">
-                          <RefreshCw className="h-4 w-4 mr-2" />
-                          Retry
-                        </Button>
-                      </AlertDescription>
-                    </Alert>
+                    <ToastBanner type="error" message={`Error: ${error}`} />
                   )}
 
                   {insights && (

@@ -3,7 +3,7 @@
 import React, { useMemo, useCallback } from 'react';
 import ReactECharts from 'echarts-for-react';
 import * as echarts from 'echarts';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import ToastBanner from '../toast-banner';
 import { AlertCircle } from 'lucide-react';
 
 // =============================================================================
@@ -583,10 +583,7 @@ export const GraphEngine: React.FC<GraphEngineProps> = ({
     const errorMessage = error || validationErrors.join(', ');
     return (
       <div className={`p-4 ${className}`} style={defaultStyle}>
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{errorMessage}</AlertDescription>
-        </Alert>
+        <ToastBanner type="error" message={errorMessage} onClose={() => {}} />
       </div>
     );
   }

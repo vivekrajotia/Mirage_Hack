@@ -1,15 +1,17 @@
 import nodemailer from 'nodemailer'
 import { NextResponse } from 'next/server';
 
-export async function POST(request: Request) {
-  const { name, email, message } = await request.json();
+// In-memory array to keep track of scheduled emails (for prototype only)
+const scheduledEmails: NodeJS.Timeout[] = [];
 
-  if (!name || !email || !message) {
-    console.error('Missing required fields:', { name, email, message });
+export async function POST(request: Request) {
+  const { email, message, scheduledTime } = await request.json();
+
+  if (!email || !message) {
+    console.error('Missing required fields:', { email, message });
     return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
   }
 
-  
   const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST || '',
     port: parseInt(process.env.SMTP_PORT || '587', 10),
@@ -31,18 +33,32 @@ export async function POST(request: Request) {
   const mailOptions = {
     from: process.env.FROM_EMAIL,
     to: email,
-    subject: `Contact from ${name}`,
+    subject: `Insights Report`,
     text: message,
     html: htmlContent,
     replyTo: email,
   };
 
-  try {
-    await transporter.sendMail(mailOptions);
-    console.log('Email sent:', mailOptions);
-    return NextResponse.json({ message: 'Email sent successfully' }, { status: 200 });
-  } catch (err: any) {
-    console.error('Failed to send email:', err);
-    return NextResponse.json({ message: 'Failed to send email', error: err.message }, { status: 500 });
+  const sendEmail = async () => {
+    try {
+      await transporter.sendMail(mailOptions);
+      console.log('Email sent:', mailOptions);
+    } catch (err: any) {
+      console.error('Failed to send email:', err);
+    }
+  };
+
+  if (scheduledTime && new Date(scheduledTime) > new Date()) {
+    const delay = new Date(scheduledTime).getTime() - Date.now();
+    const timeout = setTimeout(sendEmail, delay);
+    scheduledEmails.push(timeout);
+    return NextResponse.json({ message: 'Email scheduled successfully' }, { status: 200 });
+  } else {
+    try {
+      await sendEmail();
+      return NextResponse.json({ message: 'Email sent successfully' }, { status: 200 });
+    } catch (err: any) {
+      return NextResponse.json({ message: 'Failed to send email', error: err.message }, { status: 500 });
+    }
   }
 }
