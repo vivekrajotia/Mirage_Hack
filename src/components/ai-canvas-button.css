@@ -1,20 +1,24 @@
 @keyframes pulse-glow {
   0%, 100% {
-    box-shadow: 0 0 5px rgba(59, 130, 246, 0.5);
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.3), 0 0 20px rgba(147, 51, 234, 0.2);
   }
   50% {
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.8), 0 0 30px rgba(147, 51, 234, 0.4);
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.6), 0 0 35px rgba(147, 51, 234, 0.4), 0 0 50px rgba(6, 182, 212, 0.3);
   }
 }
 
 @keyframes sparkle {
   0%, 100% {
-    opacity: 0;
-    transform: scale(0.5);
+    opacity: 0.4;
+    transform: scale(0.8) rotate(0deg);
   }
-  50% {
+  33% {
     opacity: 1;
-    transform: scale(1);
+    transform: scale(1.2) rotate(120deg);
+  }
+  66% {
+    opacity: 0.6;
+    transform: scale(0.9) rotate(240deg);
   }
 }
 
@@ -22,100 +26,156 @@
   0% {
     background-position: 0% 50%;
   }
+  25% {
+    background-position: 50% 0%;
+  }
   50% {
     background-position: 100% 50%;
+  }
+  75% {
+    background-position: 50% 100%;
   }
   100% {
     background-position: 0% 50%;
   }
 }
 
+@keyframes shimmer-wave {
+  0% {
+    transform: translateX(-100%) skewX(-15deg);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(200%) skewX(-15deg);
+    opacity: 0;
+  }
+}
+
 .ai-canvas-button {
   position: relative;
-  background: linear-gradient(45deg, #3b82f6, #8b5cf6, #06b6d4);
-  background-size: 300% 300%;
-  animation: gradient-shift 3s ease infinite;
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 35%, #ec4899 65%, #06b6d4 100%);
+  background-size: 400% 400%;
+  animation: gradient-shift 6s ease-in-out infinite;
   border: none;
-  border-radius: 8px;
+  border-radius: 12px;
   overflow: hidden;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   width: 100%;
   display: flex;
   justify-content: flex-start;
   align-items: center;
   contain: layout style;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3), 0 2px 8px rgba(147, 51, 234, 0.2);
 }
 
 .ai-canvas-button:hover {
-  animation: pulse-glow 2s ease-in-out infinite;
-  transform: scale(1.02);
+  animation: pulse-glow 2s ease-in-out infinite, gradient-shift 3s ease-in-out infinite;
+  transform: scale(1.03) translateY(-1px);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4), 0 4px 15px rgba(147, 51, 234, 0.3), 0 2px 10px rgba(6, 182, 212, 0.2);
+}
+
+.ai-canvas-button:active {
+  transform: scale(0.98) translateY(0);
+  transition: all 0.15s ease-out;
 }
 
 .ai-canvas-button::before {
   content: '';
   position: absolute;
   top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-  transform: translateX(-100%);
-  transition: transform 0.6s ease;
+  left: -50%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(255, 255, 255, 0.2), 
+    rgba(255, 255, 255, 0.4), 
+    rgba(255, 255, 255, 0.2), 
+    transparent
+  );
+  transform: skewX(-25deg);
+  opacity: 0;
+  transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .ai-canvas-button:hover::before {
-  transform: translateX(100%);
+  left: 120%;
+  opacity: 1;
+  animation: shimmer-wave 2s ease-out;
 }
 
 .sparkle-icon {
-  animation: sparkle 2s ease-in-out infinite;
+  animation: sparkle 3s ease-in-out infinite;
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.8));
 }
 
 .ai-canvas-button .bot-icon {
-  transition: transform 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.3));
 }
 
 .ai-canvas-button:hover .bot-icon {
-  transform: scale(1.1) rotate(5deg);
+  transform: scale(1.15) rotate(8deg);
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.6));
 }
 
-.ai-canvas-button:active {
-  transform: scale(0.95);
-}
-
-/* Glowing text effect */
+/* Enhanced glowing text effect */
 .ai-canvas-button .button-text {
   position: relative;
   z-index: 1;
-  font-weight: 600;
-  text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+  font-weight: 700;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.4), 0 2px 4px rgba(0, 0, 0, 0.1);
+  letter-spacing: 0.5px;
 }
 
-/* Animated border */
+/* Enhanced animated border */
 .ai-canvas-button::after {
   content: '';
   position: absolute;
-  top: -1px;
-  left: -1px;
-  right: -1px;
-  bottom: -1px;
-  background: linear-gradient(45deg, #3b82f6, #8b5cf6, #06b6d4, #3b82f6);
-  background-size: 300% 300%;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, 
+    #3b82f6, #8b5cf6, #ec4899, #06b6d4, 
+    #10b981, #f59e0b, #ef4444, #3b82f6
+  );
+  background-size: 400% 400%;
   z-index: -1;
-  animation: gradient-shift 3s ease infinite;
+  border-radius: 14px;
+  animation: gradient-shift 4s ease infinite;
   opacity: 0;
-  transition: opacity 0.3s ease;
-  pointer-events: none;
+  transition: opacity 0.4s ease;
+  filter: blur(2px);
 }
 
 .ai-canvas-button:hover::after {
-  opacity: 1;
+  opacity: 0.7;
+}
+
+/* Inner glow effect */
+.ai-canvas-button:before {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  background: inherit;
+  border-radius: 11px;
+  z-index: -1;
+  filter: blur(1px);
+  opacity: 0.8;
 }
 
 /* Ensure proper alignment within sidebar */
 .ai-canvas-button {
   max-width: 100%;
   box-sizing: border-box;
+  min-height: 48px;
 }
 
 /* Prevent text from wrapping */
@@ -129,4 +189,39 @@
 .ai-canvas-button .bot-icon,
 .ai-canvas-button .sparkle-icon {
   flex-shrink: 0;
+}
+
+/* Status badge enhancement */
+.ai-canvas-button .status-text {
+  font-size: 0.75rem;
+  opacity: 0.9;
+  font-weight: 500;
+  text-shadow: 0 0 4px rgba(255, 255, 255, 0.3);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .ai-canvas-button {
+    min-height: 44px;
+    border-radius: 10px;
+  }
+  
+  .ai-canvas-button .button-text {
+    font-size: 0.875rem;
+  }
+  
+  .ai-canvas-button .status-text {
+    font-size: 0.7rem;
+  }
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  .ai-canvas-button {
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4), 0 2px 8px rgba(147, 51, 234, 0.3);
+  }
+  
+  .ai-canvas-button:hover {
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.5), 0 4px 15px rgba(147, 51, 234, 0.4), 0 2px 10px rgba(6, 182, 212, 0.3);
+  }
 }

@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import './ai-canvas-button.css';
+import './enhanced-sidebar.css';
 import {
   SidebarProvider,
   Sidebar,
@@ -12,6 +13,9 @@ import {
   SidebarMenuButton,
   SidebarInset,
   SidebarTrigger,
+  SidebarSeparator,
+  SidebarGroup,
+  SidebarGroupLabel,
 } from '@/components/ui/sidebar';
 import {
   LayoutDashboard,
@@ -20,71 +24,181 @@ import {
   CircleHelp,
   Bot,
   Sparkles,
+  FileText,
+  TrendingUp,
 } from 'lucide-react';
 import { DashboardClient } from '@/components/dashboard/dashboard-client';
 import { AICanvas } from '@/components/ai-canvas';
 
 const DashboardPage: React.FC = () => {
   const [isAICanvasOpen, setIsAICanvasOpen] = React.useState(false);
+  const [activeItem, setActiveItem] = React.useState('dashboard');
 
   return (
     <SidebarProvider>
-      <Sidebar>
-        <SidebarHeader>
-          <div className="flex h-10 items-center gap-2 px-2">
-            <BarChart2 className="size-6 text-primary" />
-            <span className="text-lg font-semibold">TradeVision</span>
+      <Sidebar className="border-r-0 shadow-lg sidebar-enhanced">
+        <SidebarHeader className="bg-gradient-to-b from-slate-50 to-white dark:from-slate-900 dark:to-slate-800 p-6 sidebar-header-enhanced">
+          <div className="flex h-12 items-center gap-3">
+            <div className="relative logo-container-enhanced">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg blur opacity-75"></div>
+              <div className="relative bg-gradient-to-r from-blue-500 to-cyan-500 p-2 rounded-lg">
+                <TrendingUp className="size-6 text-white" />
+              </div>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                TradeVision
+              </span>
+              <span className="text-xs text-muted-foreground font-medium">
+                Trading Analytics Platform
+              </span>
+            </div>
           </div>
         </SidebarHeader>
-        <SidebarContent>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton isActive tooltip="Dashboard">
-                <LayoutDashboard />
-                Dashboard
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton 
-                tooltip="AI Canvas - Intelligent Data Analysis"
-                onClick={() => setIsAICanvasOpen(true)}
-                className="ai-canvas-button text-white border-0 w-full"
-              >
-                <div className="flex items-center gap-2 relative z-10 w-full">
-                  <div className="relative flex-shrink-0">
-                    <Bot className="h-4 w-4 bot-icon" />
-                    <Sparkles className="h-3 w-3 absolute -top-1 -right-1 sparkle-icon text-yellow-300" />
+        
+        <SidebarContent className="bg-gradient-to-b from-white to-slate-50/50 dark:from-slate-800 dark:to-slate-900/50 sidebar-content-enhanced">
+          <SidebarGroup className="px-3 py-2">
+            <SidebarGroupLabel className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 group-label-enhanced">
+              Main Navigation
+            </SidebarGroupLabel>
+            <SidebarMenu className="space-y-1">
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  isActive={activeItem === 'dashboard'}
+                  tooltip="Dashboard Overview"
+                  onClick={() => setActiveItem('dashboard')}
+                  className="group relative overflow-hidden transition-all duration-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-cyan-50 dark:hover:from-blue-900/20 dark:hover:to-cyan-900/20 hover:shadow-md data-[active=true]:bg-gradient-to-r data-[active=true]:from-blue-100 data-[active=true]:to-cyan-100 dark:data-[active=true]:from-blue-900/30 dark:data-[active=true]:to-cyan-900/30 data-[active=true]:shadow-sm border-0 data-[active=true]:border data-[active=true]:border-blue-200/50 dark:data-[active=true]:border-blue-700/50"
+                >
+                  <div className="flex items-center gap-3 w-full">
+                    <div className="relative">
+                      <LayoutDashboard className="h-5 w-5 transition-colors group-hover:text-blue-600 dark:group-hover:text-blue-400" />
+                      {activeItem === 'dashboard' && (
+                        <div className="absolute inset-0 bg-blue-500/20 rounded-full blur-sm"></div>
+                      )}
+                    </div>
+                    <span className="font-medium group-hover:text-blue-700 dark:group-hover:text-blue-300">
+                      Dashboard
+                    </span>
                   </div>
-                  <span className="button-text flex-grow text-left">AI CANVAS</span>
-                </div>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton tooltip="Reports">
-                <BarChart2 />
-                Reports
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton tooltip="Settings">
-                <Settings />
-                Settings
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton tooltip="Support">
-                <CircleHelp />
-                Support
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
+                  {activeItem === 'dashboard' && (
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 to-cyan-500 rounded-r-full"></div>
+                  )}
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  tooltip="AI Canvas - Intelligent Data Analysis"
+                  onClick={() => setIsAICanvasOpen(true)}
+                  className="group relative overflow-hidden ai-canvas-button text-white border-0 w-full h-12 bg-gradient-to-r from-blue-500 via-purple-500 to-cyan-500 hover:from-blue-600 hover:via-purple-600 hover:to-cyan-600 transition-all duration-300 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  <div className="flex items-center gap-3 relative z-10 w-full">
+                    <div className="relative flex-shrink-0">
+                      <div className="absolute inset-0 bg-white/20 rounded-full blur-sm"></div>
+                      <Bot className="h-5 w-5 bot-icon relative text-white" />
+                      <Sparkles className="h-3 w-3 absolute -top-1 -right-1 sparkle-icon text-yellow-300" />
+                    </div>
+                    <div className="flex flex-col items-start flex-grow">
+                      <span className="button-text font-bold text-sm">AI CANVAS</span>
+                      <span className="text-xs text-white/80 font-medium">Powered by AI</span>
+                    </div>
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  isActive={activeItem === 'reports'}
+                  tooltip="Trading Reports"
+                  onClick={() => setActiveItem('reports')}
+                  className="group relative overflow-hidden transition-all duration-200 hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 dark:hover:from-green-900/20 dark:hover:to-emerald-900/20 hover:shadow-md data-[active=true]:bg-gradient-to-r data-[active=true]:from-green-100 data-[active=true]:to-emerald-100 dark:data-[active=true]:from-green-900/30 dark:data-[active=true]:to-emerald-900/30 data-[active=true]:shadow-sm border-0 data-[active=true]:border data-[active=true]:border-green-200/50 dark:data-[active=true]:border-green-700/50"
+                >
+                  <div className="flex items-center gap-3 w-full">
+                    <div className="relative">
+                      <FileText className="h-5 w-5 transition-colors group-hover:text-green-600 dark:group-hover:text-green-400" />
+                      {activeItem === 'reports' && (
+                        <div className="absolute inset-0 bg-green-500/20 rounded-full blur-sm"></div>
+                      )}
+                    </div>
+                    <span className="font-medium group-hover:text-green-700 dark:group-hover:text-green-300">
+                      Reports
+                    </span>
+                  </div>
+                  {activeItem === 'reports' && (
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-green-500 to-emerald-500 rounded-r-full"></div>
+                  )}
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroup>
+
+          <SidebarSeparator className="my-4 mx-3 separator-enhanced" />
+
+          <SidebarGroup className="px-3 py-2">
+            <SidebarGroupLabel className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 group-label-enhanced">
+              Account & Support
+            </SidebarGroupLabel>
+            <SidebarMenu className="space-y-1">
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  isActive={activeItem === 'settings'}
+                  tooltip="Settings & Preferences"
+                  onClick={() => setActiveItem('settings')}
+                  className="group relative overflow-hidden transition-all duration-200 hover:bg-gradient-to-r hover:from-slate-50 hover:to-gray-50 dark:hover:from-slate-800 dark:hover:to-gray-800 hover:shadow-sm data-[active=true]:bg-gradient-to-r data-[active=true]:from-slate-100 data-[active=true]:to-gray-100 dark:data-[active=true]:from-slate-800 dark:data-[active=true]:to-gray-800 data-[active=true]:shadow-sm"
+                >
+                  <div className="flex items-center gap-3 w-full">
+                    <Settings className="h-5 w-5 transition-colors group-hover:text-slate-700 dark:group-hover:text-slate-300" />
+                    <span className="font-medium group-hover:text-slate-700 dark:group-hover:text-slate-300">
+                      Settings
+                    </span>
+                  </div>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  isActive={activeItem === 'support'}
+                  tooltip="Help & Support"
+                  onClick={() => setActiveItem('support')}
+                  className="group relative overflow-hidden transition-all duration-200 hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50 dark:hover:from-orange-900/20 dark:hover:to-amber-900/20 hover:shadow-sm data-[active=true]:bg-gradient-to-r data-[active=true]:from-orange-100 data-[active=true]:to-amber-100 dark:data-[active=true]:from-orange-900/30 dark:data-[active=true]:to-amber-900/30 data-[active=true]:shadow-sm"
+                >
+                  <div className="flex items-center gap-3 w-full">
+                    <CircleHelp className="h-5 w-5 transition-colors group-hover:text-orange-600 dark:group-hover:text-orange-400" />
+                    <span className="font-medium group-hover:text-orange-700 dark:group-hover:text-orange-300">
+                      Support
+                    </span>
+                  </div>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroup>
+
+          {/* Status indicator at bottom */}
+          <div className="mt-auto mb-4 mx-3 p-3 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg border border-green-200/50 dark:border-green-700/50 status-indicator-enhanced">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full status-dot"></div>
+              <span className="text-sm font-medium text-green-700 dark:text-green-300">
+                System Online
+              </span>
+            </div>
+          </div>
         </SidebarContent>
       </Sidebar>
-      <SidebarInset>
-        <header className="flex h-14 items-center border-b bg-card px-4">
-          <SidebarTrigger />
+      
+      <SidebarInset className="bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-800">
+        <header className="sticky top-0 z-40 flex h-16 items-center border-b bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm px-6 shadow-sm">
+          <SidebarTrigger className="hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200" />
+          <div className="ml-4">
+            <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+              Welcome to TradeVision
+            </h1>
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              Your comprehensive trading analytics dashboard
+            </p>
+          </div>
         </header>
-        <main className="flex-1 overflow-auto p-4 md:p-6">
+        <main className="flex-1 overflow-auto p-6">
           <DashboardClient />
         </main>
       </SidebarInset>
