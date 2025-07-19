@@ -1,7 +1,7 @@
 import { Trade } from './types';
 import { FilterState } from '@/components/dashboard/filter-selector';
 
-const GEMINI_API_KEY =  'AIzaSyBFqwV3wtZ7nt0LmqpzMdvE6XoAxK_yk8c';
+const GEMINI_API_KEY =  'AIzaSyCGBg0bHeMOuSdi383Ge3oHDI1dV9kI7X0';
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent';
 
 interface DashboardContext {
@@ -52,6 +52,27 @@ interface ChatResponse {
   type: 'filter' | 'insight';
   filters?: FilterState;
   insight?: string;
+  explanation: string;
+  confidence: number;
+}
+
+interface WidgetGenerationResponse {
+  type: 'widget';
+  widgetConfig: {
+    title: string;
+    type: string;
+    xAxis?: string;
+    yAxis?: string;
+    colorBy?: string;
+    valueField?: string;
+    aggregation?: string;
+    filters?: Array<{
+      field: string;
+      condition: string;
+      value: string;
+    }>;
+    selectedColumns?: string[];
+  };
   explanation: string;
   confidence: number;
 }
@@ -598,6 +619,220 @@ You can also ask questions like: "What's the performance?" or "Which trader is d
       // Return fallback analysis if API fails
       return this.generateFallbackInsights(dashboardData, contextInfo);
     }
+  }
+
+  /**
+   * Generate widget configuration from natural language prompt
+   */
+  static async generateWidgetFromPrompt(
+    prompt: string,
+    availableData: any[]
+  ): Promise<WidgetGenerationResponse> {
+    try {
+      const uniqueValues = this.extractUniqueValues(availableData);
+      const widgetPrompt = this.createWidgetGenerationPrompt(prompt, uniqueValues, availableData);
+
+      const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: widgetPrompt
+            }]
+          }]
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+        const aiResponse = data.candidates[0].content.parts[0].text;
+        return this.parseWidgetGenerationResponse(aiResponse);
+      } else {
+        throw new Error('Invalid API response format');
+      }
+    } catch (error) {
+      console.error('Widget generation failed:', error);
+      return this.generateFallbackWidget(prompt, availableData);
+    }
+  }
+
+  /**
+   * Create widget generation prompt for Gemini
+   */
+  private static createWidgetGenerationPrompt(
+    prompt: string,
+    uniqueValues: any,
+    availableData: any[]
+  ): string {
+    const sampleData = availableData.slice(0, 3).map(trade => ({
+      trade_id: trade.trade_id,
+      commodity: trade.commodity,
+      company: trade.company,
+      trader_name: trade.trader_name,
+      counterparty: trade.counterparty,
+      price: trade.price,
+      quantity: trade.quantity,
+      mtm_pnl: trade.mtm_pnl,
+      trade_transaction_type: trade.trade_transaction_type,
+      trade_date_time: trade.trade_date_time
+    }));
+
+    return `You are an expert data visualization specialist who creates trading dashboard widgets based on user requests.
+
+USER REQUEST: "${prompt}"
+
+AVAILABLE DATA CONTEXT:
+- Total records: ${availableData.length}
+- Available commodities: ${uniqueValues.commodities.slice(0, 10).join(', ')}
+- Available companies: ${uniqueValues.companies.slice(0, 10).join(', ')}
+- Available traders: ${uniqueValues.traders.slice(0, 10).join(', ')}
+- Price range: ₹${Math.min(...availableData.map(d => d.price || 0))} - ₹${Math.max(...availableData.map(d => d.price || 0))}
+
+SAMPLE DATA STRUCTURE:
+${JSON.stringify(sampleData, null, 2)}
+
+AVAILABLE WIDGET TYPES:
+- "Bar Chart" - Best for comparing categories (commodities, traders, companies)
+- "Line Chart" - Best for trends over time (price movements, PnL over time)
+- "Pie Chart" - Best for showing proportions (market share, PnL distribution)
+- "Scatter Chart" - Best for correlations (price vs quantity, risk vs return)
+- "Data Table" - Best for detailed data examination and filtering
+
+AVAILABLE FIELDS FOR CHARTS:
+X-AXIS (Categories): trade_id, commodity, company, trader_name, counterparty, trade_date_time
+Y-AXIS (Values): price, quantity, mtm_pnl
+COLOR BY: commodity, company, trader_name, counterparty, trade_transaction_type
+VALUE FIELD: price, quantity, mtm_pnl
+
+AGGREGATION OPTIONS: sum, average, count, min, max
+
+FILTER CONDITIONS: equals, contains, is greater than, is less than
+
+Based on the user's request, generate a widget configuration. Use this EXACT JSON format:
+
+{
+  "type": "widget",
+  "widgetConfig": {
+    "title": "Descriptive title for the widget",
+    "type": "Bar Chart|Line Chart|Pie Chart|Scatter Chart|Data Table",
+    "xAxis": "field_name_for_category",
+    "yAxis": "field_name_for_values",
+    "colorBy": "field_name_for_grouping",
+    "valueField": "field_name_for_pie_charts",
+    "aggregation": "sum|average|count|min|max",
+    "filters": [
+      {
+        "field": "field_name",
+        "condition": "equals|contains|is greater than|is less than",
+        "value": "filter_value"
+      }
+    ],
+    "selectedColumns": ["column1", "column2"] // Only for Data Table
+  },
+  "explanation": "Clear explanation of what widget was created and why",
+  "confidence": 0.95
+}
+
+INSTRUCTIONS:
+1. Analyze the user's request to determine the best visualization type
+2. Choose appropriate fields for X-axis, Y-axis, and grouping
+3. Set meaningful title and aggregation method
+4. Add relevant filters if specified in the request
+5. For tables, include relevant columns based on the request
+6. Use exact field names from the sample data
+7. Provide confidence level (0.8-1.0 for good matches)
+8. Only return valid JSON, no additional text
+
+EXAMPLES:
+- "Show PnL by commodity" → Bar Chart with commodity on X-axis, mtm_pnl on Y-axis
+- "Price trends over time" → Line Chart with trade_date_time on X-axis, price on Y-axis  
+- "Top traders by profit" → Bar Chart with trader_name on X-axis, mtm_pnl (sum) on Y-axis, filter for profitable trades
+- "Market share by commodity" → Pie Chart with commodity grouping, mtm_pnl as value
+- "Profitable trades details" → Data Table with filter for mtm_pnl > 0
+
+Return only the JSON response.`;
+  }
+
+  /**
+   * Parse Gemini's widget generation response
+   */
+  private static parseWidgetGenerationResponse(aiResponse: string): WidgetGenerationResponse {
+    try {
+      const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error('No JSON found in AI response');
+      }
+
+      const parsedResponse = JSON.parse(jsonMatch[0]);
+      
+      return {
+        type: 'widget',
+        widgetConfig: parsedResponse.widgetConfig || {},
+        explanation: parsedResponse.explanation || 'Widget configuration generated.',
+        confidence: parsedResponse.confidence || 0.8
+      };
+    } catch (error) {
+      console.error('Error parsing Gemini widget response:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Generate fallback widget when AI fails
+   */
+  private static generateFallbackWidget(
+    prompt: string,
+    availableData: any[]
+  ): WidgetGenerationResponse {
+    const normalizedPrompt = prompt.toLowerCase();
+    let widgetConfig: any = {
+      title: 'AI Generated Widget',
+      type: 'Bar Chart',
+      xAxis: 'commodity',
+      yAxis: 'mtm_pnl',
+      aggregation: 'sum',
+      filters: [],
+      selectedColumns: []
+    };
+
+    // Basic pattern matching for fallback
+    if (normalizedPrompt.includes('line') || normalizedPrompt.includes('trend') || normalizedPrompt.includes('time')) {
+      widgetConfig.type = 'Line Chart';
+      widgetConfig.xAxis = 'trade_date_time';
+      widgetConfig.yAxis = 'price';
+      widgetConfig.title = 'Price Trends Over Time';
+    } else if (normalizedPrompt.includes('pie') || normalizedPrompt.includes('share') || normalizedPrompt.includes('proportion')) {
+      widgetConfig.type = 'Pie Chart';
+      widgetConfig.valueField = 'mtm_pnl';
+      widgetConfig.colorBy = 'commodity';
+      widgetConfig.title = 'PnL Distribution by Commodity';
+    } else if (normalizedPrompt.includes('table') || normalizedPrompt.includes('detail') || normalizedPrompt.includes('list')) {
+      widgetConfig.type = 'Data Table';
+      widgetConfig.selectedColumns = ['trade_id', 'commodity', 'trader_name', 'price', 'mtm_pnl'];
+      widgetConfig.title = 'Trading Data Table';
+    } else if (normalizedPrompt.includes('profitable') || normalizedPrompt.includes('profit')) {
+      widgetConfig.filters = [{
+        field: 'mtm_pnl',
+        condition: 'is greater than',
+        value: '0'
+      }];
+      widgetConfig.title = 'Profitable Trades by Commodity';
+    }
+
+    return {
+      type: 'widget',
+      widgetConfig,
+      explanation: `Created a ${widgetConfig.type.toLowerCase()} based on your request. AI analysis was unavailable, so I used pattern matching to generate this configuration.`,
+      confidence: 0.6
+    };
   }
 
   /**

@@ -19,11 +19,18 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { PlusCircle, X, Trash2 } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { PlusCircle, X, Trash2, Bot, Sparkles, MessageSquare, Send, Loader2 } from 'lucide-react';
 import eodData from '@/app/xceler_eodservice_publisheddata (1).json'; // Use the correct data file
 import { DraggableColumnSelector } from '@/components/ui/draggable-column-selector';
 import { useToast } from '@/hooks/use-toast';
 import ToastBanner from '@/components/toast-banner';
+import { AIInsightsService } from '@/lib/ai-insights-service';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 
 // Define the type based on the JSON data structure
 type EodData = typeof eodData[0];
@@ -99,6 +106,14 @@ const WidgetGenerator = () => {
   const allTableColumns = useMemo(() => Object.keys(eodData[0] || {}), []);
   const { toast } = useToast();
   const [banner, setBanner] = useState<{ type: 'success' | 'error' | 'info', message: string } | null>(null);
+  const [isAIChatOpen, setIsAIChatOpen] = useState(false);
+  const [aiChatInput, setAiChatInput] = useState('');
+  const [isAILoading, setIsAILoading] = useState(false);
+  const [aiChatHistory, setAiChatHistory] = useState<Array<{
+    type: 'user' | 'ai';
+    message: string;
+    timestamp: Date;
+  }>>([]);
 
   const [config, setConfig] = useState<WidgetConfig>({
     title: 'New EOD Widget',
@@ -172,6 +187,96 @@ const WidgetGenerator = () => {
     }
   };
 
+  const handleAIChat = async () => {
+    if (!aiChatInput.trim() || isAILoading) return;
+
+    const userMessage = aiChatInput.trim();
+    setAiChatInput('');
+    setIsAILoading(true);
+
+    // Add user message to chat history
+    setAiChatHistory(prev => [...prev, {
+      type: 'user',
+      message: userMessage,
+      timestamp: new Date()
+    }]);
+
+    try {
+      // Call AI service to generate widget configuration
+      const response = await AIInsightsService.generateWidgetFromPrompt(userMessage, eodData);
+      
+      // Apply the AI-generated configuration
+      if (response.type === 'widget' && response.widgetConfig) {
+        const aiConfig = response.widgetConfig;
+        
+        // Convert AI response to our widget config format
+        const newConfig: WidgetConfig = {
+          title: aiConfig.title || 'AI Generated Widget',
+          type: aiConfig.type || 'Bar Chart',
+          xAxis: aiConfig.xAxis || config.xAxis,
+          yAxis: aiConfig.yAxis || config.yAxis,
+          colorBy: aiConfig.colorBy || '',
+          valueField: aiConfig.valueField || config.valueField,
+          aggregation: aiConfig.aggregation || 'sum',
+          filters: (aiConfig.filters || []).map((filter, index) => ({
+            id: nextFilterId + index,
+            field: filter.field,
+            condition: filter.condition,
+            value: filter.value
+          })),
+          selectedColumns: aiConfig.selectedColumns || []
+        };
+
+        setConfig(newConfig);
+        setNextFilterId(prev => prev + (aiConfig.filters?.length || 0));
+
+        // Add AI response to chat history
+        setAiChatHistory(prev => [...prev, {
+          type: 'ai',
+          message: `✅ ${response.explanation}\n\nI've configured a ${aiConfig.type} widget for you. You can review and modify the settings below, then save when ready.`,
+          timestamp: new Date()
+        }]);
+
+        setBanner({ 
+          type: 'success', 
+          message: `AI generated widget: ${aiConfig.title}` 
+        });
+      }
+    } catch (error) {
+      console.error('AI widget generation failed:', error);
+      
+      // Add error message to chat history
+      setAiChatHistory(prev => [...prev, {
+        type: 'ai',
+        message: `❌ Sorry, I couldn't generate a widget from that request. Please try being more specific about what you want to visualize. For example:
+        
+• "Create a bar chart showing PnL by commodity"
+• "Make a line chart of price trends over time"  
+• "Show a pie chart of profit distribution by trader"
+• "Create a table with only profitable trades"`,
+        timestamp: new Date()
+      }]);
+
+      setBanner({ 
+        type: 'error', 
+        message: 'Failed to generate widget from AI prompt' 
+      });
+    } finally {
+      setIsAILoading(false);
+    }
+  };
+
+  const handleAIChatKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleAIChat();
+    }
+  };
+
+  const clearAIChat = () => {
+    setAiChatHistory([]);
+  };
+
   return (
     <div className="p-8 bg-gray-50 min-h-screen">
       <Card className="max-w-4xl mx-auto shadow-lg">
@@ -181,6 +286,112 @@ const WidgetGenerator = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-8">
+          
+          {/* AI Chat Interface */}
+          <Collapsible open={isAIChatOpen} onOpenChange={setIsAIChatOpen}>
+            <CollapsibleTrigger asChild>
+              <Card className="cursor-pointer hover:shadow-md transition-shadow border-2 border-dashed border-purple-200 hover:border-purple-300">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="relative">
+                      <Bot className="h-6 w-6 text-purple-600" />
+                      <Sparkles className="h-3 w-3 absolute -top-1 -right-1 text-yellow-500" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-purple-700">AI Widget Assistant</h3>
+                      <p className="text-sm text-purple-600">
+                        Describe what you want to visualize and I'll create it for you
+                      </p>
+                    </div>
+                    <MessageSquare className="h-5 w-5 text-purple-500" />
+                  </div>
+                </CardContent>
+              </Card>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-4">
+              <Card className="bg-gradient-to-br from-purple-50 to-blue-50 border-purple-200">
+                <CardHeader className="pb-3">
+                  <div className="flex justify-between items-center">
+                    <CardTitle className="text-lg text-purple-700">AI Chat</CardTitle>
+                    {aiChatHistory.length > 0 && (
+                      <Button variant="ghost" size="sm" onClick={clearAIChat}>
+                        Clear Chat
+                      </Button>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Chat History */}
+                  {aiChatHistory.length > 0 && (
+                    <div className="max-h-48 overflow-y-auto space-y-3 p-3 bg-white rounded-lg border">
+                      {aiChatHistory.map((message, index) => (
+                        <div key={index} className={`flex gap-3 ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
+                          <div className={`max-w-[80%] p-3 rounded-lg ${
+                            message.type === 'user' 
+                              ? 'bg-purple-100 text-purple-800 border border-purple-200' 
+                              : 'bg-blue-50 text-blue-800 border border-blue-200'
+                          }`}>
+                            <p className="text-sm whitespace-pre-wrap">{message.message}</p>
+                            <span className="text-xs opacity-70 mt-1 block">
+                              {message.timestamp.toLocaleTimeString()}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Chat Input */}
+                  <div className="flex gap-2">
+                    <Textarea
+                      placeholder="Describe the widget you want to create... (e.g., 'Show PnL by commodity as a bar chart')"
+                      value={aiChatInput}
+                      onChange={(e) => setAiChatInput(e.target.value)}
+                      onKeyPress={handleAIChatKeyPress}
+                      className="flex-1 min-h-[80px]"
+                      disabled={isAILoading}
+                    />
+                    <Button 
+                      onClick={handleAIChat}
+                      disabled={!aiChatInput.trim() || isAILoading}
+                      className="bg-purple-600 hover:bg-purple-700"
+                    >
+                      {isAILoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Send className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+
+                  {/* Example Prompts */}
+                  <div className="text-sm">
+                    <p className="font-medium text-purple-700 mb-2">Try these examples:</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      {[
+                        "Show PnL by commodity as a bar chart",
+                        "Create a line chart of price trends over time",
+                        "Make a pie chart showing profit distribution by trader", 
+                        "Show a table with only profitable trades"
+                      ].map((example, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setAiChatInput(example)}
+                          disabled={isAILoading}
+                          className="text-left p-2 rounded border border-purple-200 hover:bg-purple-100 transition-colors text-purple-600 text-xs"
+                        >
+                          "{example}"
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </CollapsibleContent>
+          </Collapsible>
+
+          <Separator />
+
           {/* Basic Configuration */}
           <div className="space-y-4">
             <h3 className="text-xl font-semibold text-gray-700">1. Basic Settings</h3>
