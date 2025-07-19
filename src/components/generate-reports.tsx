@@ -11,6 +11,8 @@ import {
   Loader2,
   MessageSquare,
   Sparkles,
+  BarChart3,
+  TrendingUp,
 } from 'lucide-react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,6 +20,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { GraphEngine } from '@/components/graph-engine/graph-engine';
+import { DataTableDisplay } from '@/components/data-table-display';
+import tradingData from '@/app/xceler_eodservice_publisheddata (1).json';
+
+const GEMINI_API_KEY = 'AIzaSyBFqwV3wtZ7nt0LmqpzMdvE6XoAxK_yk8c';
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent';
 
 interface GenerateReportsProps {
   onBack: () => void;
@@ -36,6 +44,25 @@ interface GeneratedReport {
   content: string;
   timestamp: Date;
   status: 'generating' | 'completed' | 'error';
+  structuredData?: {
+    report: {
+      title: string;
+      summary: string;
+      insights: string[];
+    };
+    visualizations: Array<{
+      title: string;
+      type: string;
+      description: string;
+      config: any;
+    }>;
+    tableData: {
+      title: string;
+      columns: string[];
+      rows: string[][];
+    };
+    recommendations: string[];
+  };
 }
 
 export const GenerateReports: React.FC<GenerateReportsProps> = ({ onBack }) => {
@@ -87,64 +114,270 @@ Simply describe what kind of report you need, and I'll generate it for you!`,
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const currentMessage = inputMessage;
     setInputMessage('');
     setIsGenerating(true);
 
-    // Simulate AI processing
-    setTimeout(() => {
-      const aiResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        type: 'ai',
-        content: `I understand you want to generate: "${inputMessage}"
+    // Add processing message
+    const processingMessage: Message = {
+      id: (Date.now() + 1).toString(),
+      type: 'ai',
+      content: `I'm analyzing your request: "${currentMessage}"
 
-I'm now creating a comprehensive report based on your trading data. This will include:
-• Data analysis and key metrics
-• Visual charts and graphs
-• Insights and recommendations
-• Executive summary
+🔍 Accessing your trading data...
+📊 Generating visualizations and insights...
+📈 Creating comprehensive analysis...
 
-The report is being generated and will be available shortly. You can view it once it's completed.`,
-        timestamp: new Date(),
+This may take a moment as I process your data and generate detailed reports.`,
+      timestamp: new Date(),
+    };
+
+    setMessages(prev => [...prev, processingMessage]);
+
+    // Create a new report entry
+    const newReport: GeneratedReport = {
+      id: Date.now().toString(),
+      title: currentMessage,
+      content: '',
+      timestamp: new Date(),
+      status: 'generating',
+    };
+
+    setGeneratedReports(prev => [...prev, newReport]);
+
+    try {
+      // Prepare data summary for Gemini (limiting size for API efficiency)
+      const dataSummary = {
+        totalRecords: tradingData.length,
+        sampleData: tradingData.slice(0, 10), // First 10 records as sample
+        availableFields: Object.keys(tradingData[0] || {}),
+        commodities: [...new Set(tradingData.map((d: any) => d.commodity))],
+        companies: [...new Set(tradingData.map((d: any) => d.company))],
+        profitCenters: [...new Set(tradingData.map((d: any) => d.profitcenter))],
+        traderNames: [...new Set(tradingData.map((d: any) => d.trader_name))],
+        currencies: [...new Set(tradingData.map((d: any) => d.eod_currency))],
       };
 
-      setMessages(prev => [...prev, aiResponse]);
-      
-      // Create a new report
-      const newReport: GeneratedReport = {
-        id: Date.now().toString(),
-        title: inputMessage,
-        content: generateSampleReport(inputMessage),
-        timestamp: new Date(),
-        status: 'generating',
-      };
+      const prompt = `
+You are a financial data analyst AI. You have access to trading data with the following structure and summary:
 
-      setGeneratedReports(prev => [...prev, newReport]);
-      setIsGenerating(false);
+${JSON.stringify(dataSummary, null, 2)}
 
-      // Simulate report completion
-      setTimeout(() => {
-        setGeneratedReports(prev => 
-          prev.map(report => 
-            report.id === newReport.id 
-              ? { ...report, status: 'completed' as const }
-              : report
-          )
-        );
+The user is asking for: "${currentMessage}"
 
-        const completionMessage: Message = {
-          id: (Date.now() + 2).toString(),
-          type: 'ai',
-          content: `✅ Your report "${inputMessage}" has been generated successfully! 
+Please analyze this request and generate a comprehensive report response in the following JSON format:
 
-You can now view the complete report by clicking on it in the reports list. The report includes detailed analysis, charts, and actionable insights based on your trading data.
+{
+  "report": {
+    "title": "Report title based on user request",
+    "summary": "Brief executive summary of findings",
+    "insights": [
+      "Key insight 1",
+      "Key insight 2",
+      "Key insight 3"
+    ]
+  },
+  "visualizations": [
+    {
+      "title": "Chart Title",
+      "type": "line|bar|pie|scatter|area", 
+      "description": "What this chart shows",
+      "config": {
+        "title": { "text": "Chart Title" },
+        "tooltip": { "trigger": "axis" },
+        "legend": { "show": true },
+        "xAxis": { "type": "category", "data": ["categories"] },
+        "yAxis": { "type": "value" },
+        "series": [
+          {
+            "name": "Series Name",
+            "type": "line|bar|pie|etc",
+            "data": [/* actual data values */]
+          }
+        ]
+      }
+    }
+  ],
+  "tableData": {
+    "title": "Key Metrics Table",
+    "columns": ["Column 1", "Column 2", "Column 3"],
+    "rows": [
+      ["Row 1 Col 1", "Row 1 Col 2", "Row 1 Col 3"],
+      ["Row 2 Col 1", "Row 2 Col 2", "Row 2 Col 3"]
+    ]
+  },
+  "recommendations": [
+    "Actionable recommendation 1",
+    "Actionable recommendation 2"
+  ]
+}
 
-Would you like me to generate another report or modify this one?`,
-          timestamp: new Date(),
+Important guidelines:
+1. Use actual data from the provided dataset to calculate metrics and populate charts
+2. For visualizations, ensure the config follows ECharts format exactly
+3. Choose appropriate chart types based on the data being displayed
+4. Provide meaningful insights based on actual data patterns
+5. Make sure all numeric data in charts and tables comes from actual calculations on the dataset
+6. If the user asks for specific commodities, companies, or time periods, filter the data accordingly
+7. Always include realistic data values, not placeholder text
+
+Generate a professional, data-driven report response now.
+`;
+
+      // Call Gemini API directly
+      const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: prompt
+            }]
+          }]
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Gemini API request failed: ${response.status}`);
+      }
+
+      const data = await response.json();
+      let parsedResponse;
+
+      try {
+        if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+          const aiResponse = data.candidates[0].content.parts[0].text;
+          // Try to extract JSON from the response
+          const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            parsedResponse = JSON.parse(jsonMatch[0]);
+          } else {
+            throw new Error('No JSON found in response');
+          }
+        } else {
+          throw new Error('Invalid Gemini API response format');
+        }
+      } catch (parseError) {
+        // If parsing fails, create a structured response from the text
+        parsedResponse = {
+          report: {
+            title: currentMessage,
+            summary: data.candidates?.[0]?.content?.parts?.[0]?.text?.substring(0, 500) || "Analysis generated based on your trading data",
+            insights: ["Analysis generated based on your trading data", "Please refine your request for more specific insights"]
+          },
+          visualizations: [],
+          tableData: {
+            title: "Trading Summary",
+            columns: ["Metric", "Value"],
+            rows: [
+              ["Total Records", tradingData.length.toString()],
+              ["Unique Commodities", dataSummary.commodities.length.toString()],
+              ["Unique Companies", dataSummary.companies.length.toString()]
+            ]
+          },
+          recommendations: ["Refine your request for more detailed analysis"]
         };
+      }
 
-        setMessages(prev => [...prev, completionMessage]);
-      }, 3000);
-    }, 1000);
+      // Update report with structured data
+      const updatedReport: GeneratedReport = {
+        ...newReport,
+        status: 'completed',
+        structuredData: parsedResponse,
+        content: generateMarkdownReport(parsedResponse),
+      };
+
+      setGeneratedReports(prev => 
+        prev.map(report => 
+          report.id === newReport.id ? updatedReport : report
+        )
+      );
+
+      // Add success message with summary
+      const successMessage: Message = {
+        id: (Date.now() + 2).toString(),
+        type: 'ai',
+        content: `✅ Your report "${currentMessage}" has been generated successfully!
+
+**Key Insights:**
+${parsedResponse.report.insights.map((insight: string, index: number) => `${index + 1}. ${insight}`).join('\n')}
+
+**Visualizations:** ${parsedResponse.visualizations.length} charts generated
+**Data Tables:** Detailed metrics and analysis included
+**Recommendations:** ${parsedResponse.recommendations.length} actionable recommendations
+
+You can view the complete report with interactive charts and downloadable data by clicking on it in the reports list. Would you like me to generate another analysis?`,
+        timestamp: new Date(),
+      };
+
+      setMessages(prev => [...prev, successMessage]);
+
+    } catch (error) {
+      console.error('Error generating report:', error);
+      
+      // Update report status to error
+      setGeneratedReports(prev => 
+        prev.map(report => 
+          report.id === newReport.id 
+            ? { ...report, status: 'error' as const }
+            : report
+        )
+      );
+
+      // Add error message
+      const errorMessage: Message = {
+        id: (Date.now() + 3).toString(),
+        type: 'ai',
+        content: `❌ I encountered an error while generating your report: "${currentMessage}"
+
+Error: ${error instanceof Error ? error.message : 'Unknown error'}
+
+Please try again with a different request or check your internet connection. I'm here to help you analyze your trading data!`,
+        timestamp: new Date(),
+      };
+
+      setMessages(prev => [...prev, errorMessage]);
+    }
+
+    setIsGenerating(false);
+  };
+
+  const generateMarkdownReport = (structuredData: any): string => {
+    const { report, visualizations, tableData, recommendations } = structuredData;
+    
+    return `
+# ${report.title}
+
+## Executive Summary
+
+${report.summary}
+
+## Key Insights
+
+${report.insights.map((insight: string, index: number) => `${index + 1}. ${insight}`).join('\n')}
+
+## Data Analysis
+
+### ${tableData.title}
+
+${tableData.columns.join(' | ')}
+${tableData.columns.map(() => '---').join(' | ')}
+${tableData.rows.map((row: string[]) => row.join(' | ')).join('\n')}
+
+## Visualizations
+
+${visualizations.map((viz: any) => `### ${viz.title}\n${viz.description}\n`).join('\n')}
+
+## Recommendations
+
+${recommendations.map((rec: string, index: number) => `${index + 1}. ${rec}`).join('\n')}
+
+---
+
+*This report was generated on ${new Date().toLocaleDateString()} using AI analysis of your trading data.*
+`;
   };
 
   const generateSampleReport = (title: string): string => {
@@ -238,9 +471,11 @@ The portfolio shows strong fundamentals with room for optimization. Implementati
   };
 
   if (currentView === 'report' && currentReport) {
+    const structuredData = currentReport.structuredData;
+    
     return (
       <div className="min-h-screen bg-background p-6">
-        <div className="max-w-4xl mx-auto space-y-6">
+        <div className="max-w-7xl mx-auto space-y-6">
           {/* Report Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -254,7 +489,7 @@ The portfolio shows strong fundamentals with room for optimization. Implementati
               </Button>
               <div>
                 <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">
-                  Generated Report
+                  {structuredData ? structuredData.report.title : 'Generated Report'}
                 </h1>
                 <p className="text-slate-600 dark:text-slate-400">
                   {currentReport.title}
@@ -270,16 +505,122 @@ The portfolio shows strong fundamentals with room for optimization. Implementati
             </Button>
           </div>
 
-          {/* Report Content */}
-          <Card>
-            <CardContent className="p-8">
-              <div className="prose prose-slate max-w-none dark:prose-invert">
-                <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
-                  {currentReport.content}
-                </pre>
-              </div>
-            </CardContent>
-          </Card>
+          {structuredData ? (
+            <>
+              {/* Executive Summary */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5" />
+                    Executive Summary
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
+                    {structuredData.report.summary}
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* Key Insights */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5" />
+                    Key Insights
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-3">
+                    {structuredData.report.insights.map((insight, index) => (
+                      <li key={index} className="flex items-start gap-3">
+                        <span className="bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-semibold mt-0.5">
+                          {index + 1}
+                        </span>
+                        <span className="text-slate-700 dark:text-slate-300">{insight}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+
+              {/* Visualizations */}
+              {structuredData.visualizations.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <BarChart3 className="h-5 w-5" />
+                      Data Visualizations
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {structuredData.visualizations.map((visualization, index) => (
+                      <div key={index} className="space-y-4">
+                        <div>
+                          <h4 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                            {visualization.title}
+                          </h4>
+                          <p className="text-sm text-slate-600 dark:text-slate-400">
+                            {visualization.description}
+                          </p>
+                        </div>
+                        <div className="bg-white dark:bg-slate-900 p-4 rounded-lg border">
+                          <GraphEngine
+                            config={visualization.config}
+                            className="w-full h-96"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Data Table */}
+              {structuredData.tableData && (
+                <DataTableDisplay
+                  title={structuredData.tableData.title}
+                  columns={structuredData.tableData.columns}
+                  rows={structuredData.tableData.rows}
+                />
+              )}
+
+              {/* Recommendations */}
+              {structuredData.recommendations.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Sparkles className="h-5 w-5" />
+                      Recommendations
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-3">
+                      {structuredData.recommendations.map((recommendation, index) => (
+                        <li key={index} className="flex items-start gap-3">
+                          <span className="bg-green-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-semibold mt-0.5">
+                            {index + 1}
+                          </span>
+                          <span className="text-slate-700 dark:text-slate-300">{recommendation}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              )}
+            </>
+          ) : (
+            /* Fallback to original markdown content */
+            <Card>
+              <CardContent className="p-8">
+                <div className="prose prose-slate max-w-none dark:prose-invert">
+                  <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
+                    {currentReport.content}
+                  </pre>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     );
