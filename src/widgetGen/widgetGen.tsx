@@ -22,6 +22,8 @@ import { Separator } from '@/components/ui/separator';
 import { PlusCircle, X, Trash2 } from 'lucide-react';
 import eodData from '@/app/xceler_eodservice_publisheddata (1).json'; // Use the correct data file
 import { DraggableColumnSelector } from '@/components/ui/draggable-column-selector';
+import { useToast } from '@/hooks/use-toast';
+import ToastBanner from '@/components/toast-banner';
 
 // Define the type based on the JSON data structure
 type EodData = typeof eodData[0];
@@ -95,6 +97,8 @@ interface WidgetConfig {
 
 const WidgetGenerator = () => {
   const allTableColumns = useMemo(() => Object.keys(eodData[0] || {}), []);
+  const { toast } = useToast();
+  const [banner, setBanner] = useState<{ type: 'success' | 'error' | 'info', message: string } | null>(null);
 
   const [config, setConfig] = useState<WidgetConfig>({
     title: 'New EOD Widget',
@@ -138,7 +142,7 @@ const WidgetGenerator = () => {
 
   const generateWidget = () => {
     console.log('Generated Widget Config:', JSON.stringify(config, null, 2));
-    alert('Widget configuration logged to console. See how you can integrate this with your dashboard!');
+    setBanner({ type: 'info', message: 'Widget configuration logged. See console for integration details.' });
   };
 
   const handlePreview = () => {
@@ -157,14 +161,14 @@ const WidgetGenerator = () => {
       });
 
       if (response.ok) {
-        alert('Widget saved successfully!');
+        setBanner({ type: 'success', message: 'Widget saved successfully!' });
       } else {
         const errorData = await response.json();
-        alert(`Failed to save widget: ${errorData.message}`);
+        setBanner({ type: 'error', message: `Failed to save widget: ${errorData.message}` });
       }
     } catch (error) {
       console.error('Error saving widget:', error);
-      alert('An error occurred while saving the widget.');
+      setBanner({ type: 'error', message: 'An error occurred while saving the widget.' });
     }
   };
 
@@ -387,6 +391,14 @@ const WidgetGenerator = () => {
           <Button onClick={handleSave}>Save Widget</Button>
         </CardFooter>
       </Card>
+      {banner && (
+        <ToastBanner
+          type={banner.type}
+          message={banner.message}
+          onClose={() => setBanner(null)}
+          duration={3000}
+        />
+      )}
     </div>
   );
 };

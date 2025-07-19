@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/button';
 import { GraphEngine } from '@/components/graph-engine';
 import { processPreviewData } from '@/components/graph-engine/graph-engine-examples';
 import { DataTable } from '@/components/dashboard/data-table';
+import { useToast } from '@/hooks/use-toast';
+import ToastBanner from '@/components/toast-banner';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -26,6 +28,8 @@ const DashboardPreview = () => {
   const [widgets, setWidgets] = useState<Widget[]>([]);
   const [layout, setLayout] = useState<any[]>([]);
   const [widgetIds, setWidgetIds] = useState<number[]>([]);
+  const { toast } = useToast();
+  const [banner, setBanner] = useState<{ type: 'success' | 'error' | 'info', message: string } | null>(null);
 
   useEffect(() => {
     const widgetIdsParam = searchParams.get('widgets');
@@ -88,13 +92,13 @@ const DashboardPreview = () => {
       });
 
       if (response.ok) {
-        alert('Dashboard layout saved successfully!');
+        setBanner({ type: 'success', message: 'Dashboard layout saved successfully!' });
       } else {
-        alert('Failed to save dashboard layout.');
+        setBanner({ type: 'error', message: 'Failed to save dashboard layout.' });
       }
     } catch (error) {
       console.error('Error saving layout:', error);
-      alert('An error occurred while saving the layout.');
+      setBanner({ type: 'error', message: 'An error occurred while saving the layout.' });
     }
   };
   
@@ -158,6 +162,14 @@ const DashboardPreview = () => {
           </div>
         ))}
       </ResponsiveGridLayout>
+      {banner && (
+        <ToastBanner
+          type={banner.type}
+          message={banner.message}
+          onClose={() => setBanner(null)}
+          duration={3000}
+        />
+      )}
     </div>
   );
 };

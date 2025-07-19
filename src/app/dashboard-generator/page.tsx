@@ -24,6 +24,8 @@ import { SortableItem } from '@/components/ui/sortable-item';
 import { Item } from '@/components/ui/item';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { LayoutGrid, Search } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import ToastBanner from '@/components/toast-banner';
 
 interface Widget {
   id: number;
@@ -40,6 +42,8 @@ const DashboardGenerator = () => {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [availableSearch, setAvailableSearch] = useState('');
   const [selectedSearch, setSelectedSearch] = useState('');
+  const { toast } = useToast();
+  const [banner, setBanner] = useState<{ type: 'success' | 'error' | 'info', message: string } | null>(null);
 
   useEffect(() => {
     const fetchWidgets = async () => {
@@ -132,11 +136,16 @@ const DashboardGenerator = () => {
   };
   
   const handleSaveDashboard = async () => {
-    console.log('Saving dashboard:', {
-      name: dashboardName,
-      widgetIds: widgets.selected.map(w => w.id),
-    });
-    alert('Dashboard saved! (Check console for output)');
+    try {
+      console.log('Saving dashboard:', {
+        name: dashboardName,
+        widgetIds: widgets.selected.map(w => w.id),
+      });
+      setBanner({ type: 'success', message: 'Dashboard saved! (Check console for output)' });
+    } catch (error) {
+      console.error('Error saving dashboard:', error);
+      setBanner({ type: 'error', message: 'Failed to save dashboard' });
+    }
   };
 
   const handlePreview = () => {
@@ -258,6 +267,14 @@ const DashboardGenerator = () => {
           </Item>
         ) : null}
       </DragOverlay>
+      {banner && (
+        <ToastBanner
+          type={banner.type}
+          message={banner.message}
+          onClose={() => setBanner(null)}
+          duration={3000}
+        />
+      )}
     </DndContext>
   );
 };
