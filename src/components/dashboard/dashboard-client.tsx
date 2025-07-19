@@ -580,6 +580,10 @@ export const DashboardClient = React.forwardRef<DashboardClientHandle, {}>((prop
     setWidgetLayout(updatedLayout);
   };
 
+  const handleClearStorageAndReset = () => {
+    WidgetManager.clearAllStorageAndReset();
+  };
+
   // Drag and Drop Functions
   const handleDragStart = (e: React.DragEvent, widgetId: string) => {
     setDraggedWidget(widgetId);
@@ -645,6 +649,7 @@ export const DashboardClient = React.forwardRef<DashboardClientHandle, {}>((prop
             onWidgetVisibilityChange={handleWidgetVisibilityToggle}
             onResetToDefault={handleResetWidgets}
             onForceAddNewWidgets={handleForceAddNewWidgets}
+            onClearStorageAndReset={handleClearStorageAndReset}
           />
           {isSendingInsights && (
             <Button

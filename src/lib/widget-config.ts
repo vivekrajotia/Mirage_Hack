@@ -293,4 +293,22 @@ export class WidgetManager {
     
     return currentLayout;
   }
+
+  static clearAllStorageAndReset(): WidgetLayout {
+    if (typeof window === 'undefined') {
+      return { widgets: DEFAULT_WIDGETS, lastUpdated: Date.now() };
+    }
+    
+    // Completely clear localStorage
+    localStorage.removeItem(WIDGET_STORAGE_KEY);
+    
+    // Force a fresh start with only the DEFAULT_WIDGETS
+    const freshLayout = { widgets: [...DEFAULT_WIDGETS], lastUpdated: Date.now() };
+    this.saveWidgetLayout(freshLayout);
+    
+    // Force page reload to ensure clean state
+    window.location.reload();
+    
+    return freshLayout;
+  }
 } 

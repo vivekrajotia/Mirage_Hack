@@ -29,13 +29,15 @@ interface WidgetSettingsProps {
   onWidgetVisibilityChange: (widgetId: string, visible: boolean) => void;
   onResetToDefault: () => void;
   onForceAddNewWidgets: () => void;
+  onClearStorageAndReset: () => void;
 }
 
 export function WidgetSettings({
   widgets,
   onWidgetVisibilityChange,
   onResetToDefault,
-  onForceAddNewWidgets
+  onForceAddNewWidgets,
+  onClearStorageAndReset
 }: WidgetSettingsProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -79,24 +81,35 @@ export function WidgetSettings({
                 <span className="font-medium">{visibleCount} visible</span> of {totalCount} widgets
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-col">
+              <div className="flex items-center gap-2 w-full">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onForceAddNewWidgets}
+                  className="text-xs gap-1 flex-1"
+                >
+                  <Plus className="h-3 w-3" />
+                  Add New Widgets
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onResetToDefault}
+                  className="text-xs gap-1 flex-1"
+                >
+                  <RotateCcw className="h-3 w-3" />
+                  Reset All
+                </Button>
+              </div>
               <Button
-                variant="ghost"
+                variant="destructive"
                 size="sm"
-                onClick={onForceAddNewWidgets}
-                className="text-xs gap-1 flex-1"
+                onClick={onClearStorageAndReset}
+                className="text-xs gap-1 w-full"
               >
-                <Plus className="h-3 w-3" />
-                Add New Widgets
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onResetToDefault}
-                className="text-xs gap-1 flex-1"
-              >
-                <RotateCcw className="h-3 w-3" />
-                Reset All
+                <RefreshCw className="h-3 w-3" />
+                Force Clean Reset
               </Button>
             </div>
           </div>
