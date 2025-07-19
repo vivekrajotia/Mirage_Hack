@@ -48,6 +48,7 @@ import { FilterSelector, FilterState } from './filter-selector';
 import { DataVisualizationPanel } from './data-visualization-panel';
 import { applyFilters, getFilterSummary } from '@/lib/filter-utils';
 import AIInsightsOverlay from '../ai-insights-overlay';
+import { AIInsightsEmailPopup } from '../ai-insights-email-popup';
 import { Widget, WidgetLayout, WidgetManager, DEFAULT_WIDGETS } from '@/lib/widget-config';
 import { MetricWidget, ChartWidget, WidgetSettings, SimpleResizableGrid } from './widgets';
 import { ChartInfoButton } from '@/components/ui/chart-info-button';
@@ -380,6 +381,7 @@ export const DashboardClient = React.forwardRef<
   const [filters, setFilters] = React.useState<FilterState>({});
   const [isVisualizationOpen, setIsVisualizationOpen] = React.useState(false);
   const [isSendingInsights, setIsSendingInsights] = React.useState(false);
+  const [isEmailPopupOpen, setIsEmailPopupOpen] = React.useState(false);
   const [widgetLayout, setWidgetLayout] = React.useState<WidgetLayout>({ widgets: DEFAULT_WIDGETS, lastUpdated: Date.now() });
   const [draggedWidget, setDraggedWidget] = React.useState<string | null>(null);
   const [isDragOver, setIsDragOver] = React.useState<string | null>(null);
@@ -548,7 +550,17 @@ export const DashboardClient = React.forwardRef<
       return;
     }
 
-    setIsSendingInsights(true);
+    // Open the email popup instead of directly sending
+    setIsEmailPopupOpen(true);
+  }, [filteredTrades]);
+
+  // New function to handle actual email sending from the popup
+  const handleSendEmail = React.useCallback(async (email: string): Promise<boolean> => {
+    if (!filteredTrades.length) {
+      setBanner({ type: 'info', message: 'No data available to analyze' });
+      return false;
+    }
+
     try {
       // Generate AI insights first
       const { AIInsightsService } = await import('@/lib/ai-insights-service');
@@ -570,21 +582,21 @@ export const DashboardClient = React.forwardRef<
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: 'AI Insights Bot',
-          email: 'subhamnaskar671@gmail.com',
+          email: email,
           message: reportText
         }),
       });
 
       if (emailResponse.ok) {
-        setBanner({ type: 'success', message: 'AI insights sent successfully to subhamnaskar671@gmail.com!' });
+        setBanner({ type: 'success', message: `AI insights sent successfully to ${email}!` });
+        return true;
       } else {
         throw new Error('Failed to send email');
       }
     } catch (error) {
       console.error('Error sending insights:', error);
       setBanner({ type: 'error', message: 'Failed to send insights. Please try again.' });
-    } finally {
-      setIsSendingInsights(false);
+      return false;
     }
   }, [filteredTrades, date, filters]);
 
@@ -1518,6 +1530,15 @@ export const DashboardClient = React.forwardRef<
 
       {/* Render ToastBanner if banner is set */}
       {banner && <ToastBanner type={banner.type} message={banner.message} onClose={() => setBanner(null)} />}
+
+      {/* AI Insights Email Popup */}
+      <AIInsightsEmailPopup
+        isOpen={isEmailPopupOpen}
+        onClose={() => setIsEmailPopupOpen(false)}
+        onSendEmail={handleSendEmail}
+        isLoading={isSendingInsights}
+        defaultEmail="subhamnaskar671@gmail.com"
+      />
 
     </div>
   );
