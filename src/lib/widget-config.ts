@@ -2,7 +2,7 @@ export interface Widget {
   id: string;
   title: string;
   component: 'metric' | 'chart';
-  type: 'total-pnl' | 'profitable-trades' | 'losing-trades' | 'total-trades' | 'risk-heatmap' | 'top-risks' | 'risk-trend' | 'risk-impact' | 'trade-distribution' | 'performance-center' | 'position-utilization' | 'monthly-risk' | 'cost-structure' | 'trade-value-pnl';
+  type: 'total-pnl' | 'profitable-trades' | 'losing-trades' | 'total-trades' | 'risk-heatmap' | 'top-risks' | 'risk-trend' | 'risk-impact' | 'trade-distribution' | 'performance-center' | 'position-utilization' | 'monthly-risk' | 'cost-structure' | 'trade-value-pnl' | 'trader-performance' | 'currency-exposure' | 'cost-waterfall' | 'trade-flow-sankey' | 'commodity-correlation' | 'geographic-risk' | 'trade-lifecycle' | 'volatility-gauge' | 'portfolio-treemap' | 'cashflow-waterfall' | 'counterparty-network';
   gridCols?: string; // Tailwind grid column classes
   visible: boolean;
   order: number;
@@ -14,7 +14,7 @@ export interface WidgetLayout {
 }
 
 export const DEFAULT_WIDGETS: Widget[] = [
-  // Metric Cards
+  // Existing Metric Cards
   {
     id: 'total-pnl',
     title: 'Total MTM PnL',
@@ -47,7 +47,8 @@ export const DEFAULT_WIDGETS: Widget[] = [
     visible: true,
     order: 3
   },
-  // Chart Widgets
+  
+  // Existing Chart Widgets
   {
     id: 'risk-heatmap',
     title: 'Risk Heatmap by Commodity',
@@ -137,6 +138,107 @@ export const DEFAULT_WIDGETS: Widget[] = [
     gridCols: 'lg:col-span-1',
     visible: true,
     order: 13
+  },
+  
+  // NEW ADVANCED WIDGETS
+  {
+    id: 'trader-performance',
+    title: 'Trader Performance Leaderboard',
+    component: 'chart',
+    type: 'trader-performance',
+    gridCols: 'lg:col-span-2',
+    visible: true,
+    order: 14
+  },
+  {
+    id: 'currency-exposure',
+    title: 'Multi-Currency Exposure Dashboard',
+    component: 'chart',
+    type: 'currency-exposure',
+    gridCols: 'lg:col-span-2',
+    visible: true,
+    order: 15
+  },
+  {
+    id: 'cost-waterfall',
+    title: 'Cost Analysis Waterfall',
+    component: 'chart',
+    type: 'cost-waterfall',
+    gridCols: 'lg:col-span-2',
+    visible: true,
+    order: 16
+  },
+  {
+    id: 'trade-flow-sankey',
+    title: 'Trade Flow Network (Sankey)',
+    component: 'chart',
+    type: 'trade-flow-sankey',
+    gridCols: 'lg:col-span-2',
+    visible: true,
+    order: 17
+  },
+  {
+    id: 'commodity-correlation',
+    title: 'Commodity Price Correlation Matrix',
+    component: 'chart',
+    type: 'commodity-correlation',
+    gridCols: 'lg:col-span-2',
+    visible: true,
+    order: 18
+  },
+  {
+    id: 'geographic-risk',
+    title: 'Geographic Risk Distribution',
+    component: 'chart',
+    type: 'geographic-risk',
+    gridCols: 'lg:col-span-1',
+    visible: true,
+    order: 19
+  },
+  {
+    id: 'trade-lifecycle',
+    title: 'Trade Lifecycle Status Timeline',
+    component: 'chart',
+    type: 'trade-lifecycle',
+    gridCols: 'lg:col-span-2',
+    visible: true,
+    order: 20
+  },
+  {
+    id: 'volatility-gauge',
+    title: 'Portfolio Volatility Gauges',
+    component: 'chart',
+    type: 'volatility-gauge',
+    gridCols: 'lg:col-span-1',
+    visible: true,
+    order: 21
+  },
+  {
+    id: 'portfolio-treemap',
+    title: 'Portfolio Composition Treemap',
+    component: 'chart',
+    type: 'portfolio-treemap',
+    gridCols: 'lg:col-span-2',
+    visible: true,
+    order: 22
+  },
+  {
+    id: 'cashflow-waterfall',
+    title: 'Cash Flow Waterfall Analysis',
+    component: 'chart',
+    type: 'cashflow-waterfall',
+    gridCols: 'lg:col-span-2',
+    visible: true,
+    order: 23
+  },
+  {
+    id: 'counterparty-network',
+    title: 'Counterparty Network Analysis',
+    component: 'chart',
+    type: 'counterparty-network',
+    gridCols: 'lg:col-span-2',
+    visible: true,
+    order: 24
   }
 ];
 
@@ -197,5 +299,41 @@ export class WidgetManager {
     const updatedLayout = { widgets: updatedWidgets, lastUpdated: Date.now() };
     this.saveWidgetLayout(updatedLayout);
     return updatedLayout;
+  }
+
+  static resetToDefaultWidgets(): WidgetLayout {
+    if (typeof window === 'undefined') {
+      return { widgets: DEFAULT_WIDGETS, lastUpdated: Date.now() };
+    }
+    
+    // Clear existing layout and force refresh with all new widgets
+    localStorage.removeItem(WIDGET_STORAGE_KEY);
+    const newLayout = { widgets: DEFAULT_WIDGETS, lastUpdated: Date.now() };
+    this.saveWidgetLayout(newLayout);
+    return newLayout;
+  }
+
+  static forceAddNewWidgets(): WidgetLayout {
+    if (typeof window === 'undefined') {
+      return { widgets: DEFAULT_WIDGETS, lastUpdated: Date.now() };
+    }
+
+    // Get existing layout
+    const currentLayout = this.getWidgetLayout();
+    
+    // Find widgets that are in DEFAULT_WIDGETS but not in current layout
+    const existingIds = new Set(currentLayout.widgets.map(w => w.id));
+    const missingWidgets = DEFAULT_WIDGETS.filter(w => !existingIds.has(w.id));
+    
+    if (missingWidgets.length > 0) {
+      const updatedWidgets = [...currentLayout.widgets, ...missingWidgets]
+        .sort((a, b) => a.order - b.order);
+      
+      const updatedLayout = { widgets: updatedWidgets, lastUpdated: Date.now() };
+      this.saveWidgetLayout(updatedLayout);
+      return updatedLayout;
+    }
+    
+    return currentLayout;
   }
 } 

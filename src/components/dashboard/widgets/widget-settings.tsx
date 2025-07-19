@@ -6,7 +6,9 @@ import {
   Eye,
   EyeOff,
   RotateCcw,
-  Save
+  Save,
+  Plus,
+  RefreshCw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,12 +28,14 @@ interface WidgetSettingsProps {
   widgets: Widget[];
   onWidgetVisibilityChange: (widgetId: string, visible: boolean) => void;
   onResetToDefault: () => void;
+  onForceAddNewWidgets: () => void;
 }
 
 export function WidgetSettings({
   widgets,
   onWidgetVisibilityChange,
-  onResetToDefault
+  onResetToDefault,
+  onForceAddNewWidgets
 }: WidgetSettingsProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -69,19 +73,32 @@ export function WidgetSettings({
 
         <div className="space-y-6">
           {/* Summary */}
-          <div className="flex items-center justify-between p-3 bg-muted/20 rounded-lg">
-            <div className="text-sm">
-              <span className="font-medium">{visibleCount} visible</span> of {totalCount} widgets
+          <div className="p-3 bg-muted/20 rounded-lg">
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-sm">
+                <span className="font-medium">{visibleCount} visible</span> of {totalCount} widgets
+              </div>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onResetToDefault}
-              className="text-xs gap-1"
-            >
-              <RotateCcw className="h-3 w-3" />
-              Reset
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onForceAddNewWidgets}
+                className="text-xs gap-1 flex-1"
+              >
+                <Plus className="h-3 w-3" />
+                Add New Widgets
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onResetToDefault}
+                className="text-xs gap-1 flex-1"
+              >
+                <RotateCcw className="h-3 w-3" />
+                Reset All
+              </Button>
+            </div>
           </div>
 
           {/* Metric Widgets */}

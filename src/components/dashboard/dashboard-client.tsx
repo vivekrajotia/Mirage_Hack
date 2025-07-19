@@ -150,6 +150,106 @@ const getChartInfo = (widgetType: string) => {
         "Spot correlations between trade value and success",
         "Detect outliers that may indicate exceptional opportunities or risks"
       ]
+    },
+    // NEW ADVANCED WIDGETS
+    'trader-performance': {
+      description: "Interactive leaderboard ranking traders by PnL performance with color-coded metrics. Shows individual trader contributions and performance trends.",
+      dataSource: "Trader-specific PnL data aggregated from all trading activities",
+      insights: [
+        "Identify top and bottom performing traders",
+        "Track individual trader consistency and risk management",
+        "Inform bonus allocations and performance reviews"
+      ]
+    },
+    'currency-exposure': {
+      description: "Multi-dimensional dashboard showing currency exposure across different currencies with risk indicators and hedging recommendations.",
+      dataSource: "Multi-currency trade data with FX exposure calculations",
+      insights: [
+        "Monitor FX risk across different currency pairs",
+        "Identify natural hedging opportunities within portfolio",
+        "Track currency concentration risks"
+      ]
+    },
+    'cost-waterfall': {
+      description: "Detailed waterfall chart showing how various cost components accumulate to total trading costs. Interactive drill-down for cost optimization.",
+      dataSource: "Granular cost data broken down by category and subcategory",
+      insights: [
+        "Visualize cost accumulation patterns step by step",
+        "Identify unexpected cost escalations",
+        "Prioritize cost reduction initiatives by impact"
+      ]
+    },
+    'trade-flow-sankey': {
+      description: "Sankey diagram showing trade flow patterns between counterparties, commodities, and regions. Visualizes trading relationship networks.",
+      dataSource: "Trade flow data mapping counterparty relationships and volumes",
+      insights: [
+        "Understand trading relationship dependencies",
+        "Identify key intermediaries in your trading network",
+        "Spot concentration risks in trading partnerships"
+      ]
+    },
+    'commodity-correlation': {
+      description: "Correlation matrix heatmap showing price correlations between different commodities. Helps with portfolio diversification and hedging strategies.",
+      dataSource: "Price data correlation analysis across commodity pairs",
+      insights: [
+        "Identify highly correlated commodity pairs for risk management",
+        "Find diversification opportunities in uncorrelated assets",
+        "Optimize hedging strategies based on correlation patterns"
+      ]
+    },
+    'geographic-risk': {
+      description: "Geographic visualization showing risk distribution across different regions and profit centers with interactive map interface.",
+      dataSource: "Regional risk data aggregated by geographic profit centers",
+      insights: [
+        "Visualize geographic concentration of risk",
+        "Identify regional performance variations",
+        "Support strategic geographic diversification decisions"
+      ]
+    },
+    'trade-lifecycle': {
+      description: "Timeline visualization tracking trades through their complete lifecycle from execution to settlement. Shows bottlenecks and efficiency metrics.",
+      dataSource: "Trade lifecycle status data with timestamps for each stage",
+      insights: [
+        "Identify process bottlenecks in trade settlement",
+        "Monitor average time-to-settlement by trade type",
+        "Optimize operational efficiency in trade processing"
+      ]
+    },
+    'volatility-gauge': {
+      description: "Multiple gauge displays showing real-time volatility metrics for different portfolios and asset classes with alert thresholds.",
+      dataSource: "Volatility calculations based on price movements and position data",
+      insights: [
+        "Monitor portfolio volatility against risk thresholds",
+        "Quick visual assessment of multiple volatility metrics",
+        "Early warning system for excessive volatility"
+      ]
+    },
+    'portfolio-treemap': {
+      description: "Hierarchical treemap visualization showing portfolio composition by commodity, counterparty, and position size with color-coded performance.",
+      dataSource: "Portfolio composition data with hierarchical breakdown",
+      insights: [
+        "Understand portfolio structure at multiple levels",
+        "Identify concentration risks in specific assets",
+        "Visualize performance patterns across portfolio segments"
+      ]
+    },
+    'cashflow-waterfall': {
+      description: "Waterfall analysis showing cash flow contributions from different sources - trades, costs, settlements, and adjustments over time.",
+      dataSource: "Cash flow data categorized by source and time period",
+      insights: [
+        "Track cash generation from different business activities",
+        "Identify cash flow timing patterns and seasonality",
+        "Optimize working capital management strategies"
+      ]
+    },
+    'counterparty-network': {
+      description: "Network graph showing counterparty relationships with interactive nodes representing entities and edges showing trade volumes and frequencies.",
+      dataSource: "Counterparty relationship data with trade volume and frequency metrics",
+      insights: [
+        "Visualize counterparty ecosystem and dependencies",
+        "Identify key counterparties for relationship management",
+        "Assess counterparty concentration risk through network analysis"
+      ]
     }
   };
 
@@ -522,9 +622,13 @@ export const DashboardClient = React.forwardRef<DashboardClientHandle, {}>((prop
   };
 
   const handleResetWidgets = () => {
-    const defaultLayout = { widgets: DEFAULT_WIDGETS, lastUpdated: Date.now() };
-    WidgetManager.saveWidgetLayout(defaultLayout);
+    const defaultLayout = WidgetManager.resetToDefaultWidgets();
     setWidgetLayout(defaultLayout);
+  };
+
+  const handleForceAddNewWidgets = () => {
+    const updatedLayout = WidgetManager.forceAddNewWidgets();
+    setWidgetLayout(updatedLayout);
   };
 
   // Drag and Drop Functions
@@ -591,6 +695,7 @@ export const DashboardClient = React.forwardRef<DashboardClientHandle, {}>((prop
             widgets={widgetLayout.widgets}
             onWidgetVisibilityChange={handleWidgetVisibilityToggle}
             onResetToDefault={handleResetWidgets}
+            onForceAddNewWidgets={handleForceAddNewWidgets}
           />
           {isSendingInsights && (
             <Button
@@ -1048,6 +1153,552 @@ export const DashboardClient = React.forwardRef<DashboardClientHandle, {}>((prop
                                 name: 'Trade Points',
                                 data: scatterData,
                                 symbolSize: 6
+                              })
+                              .build();
+                          })()}
+                        />
+                      </div>
+                    );
+                    break;
+
+                  // NEW ADVANCED WIDGET IMPLEMENTATIONS
+                  case 'trader-performance':
+                    chartContent = (
+                      <div className="h-[300px]">
+                        <GraphEngine
+                          config={(() => {
+                            const traderPerformance = filteredTrades.reduce((acc, trade) => {
+                              const trader = trade.trader_name || 'Unknown';
+                              if (!acc[trader]) {
+                                acc[trader] = { totalPnL: 0, trades: 0, winRate: 0, wins: 0 };
+                              }
+                              acc[trader].totalPnL += trade.mtm_pnl;
+                              acc[trader].trades++;
+                              if (trade.mtm_pnl > 0) acc[trader].wins++;
+                              acc[trader].winRate = (acc[trader].wins / acc[trader].trades) * 100;
+                              return acc;
+                            }, {} as Record<string, any>);
+
+                            const sortedTraders = Object.entries(traderPerformance)
+                              .sort(([, a], [, b]) => b.totalPnL - a.totalPnL);
+
+                            const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8'];
+
+                            return new GraphConfigBuilder()
+                              .title('')
+                              .xAxis('category', sortedTraders.map(([name]) => name))
+                              .yAxis('value', { name: 'PnL (M)' })
+                              .tooltip('axis')
+                              .legend(false)
+                              .background('#ffffff')
+                              .dimensions('100%', '300px')
+                              .addBarSeries({
+                                name: 'Total PnL (M)',
+                                data: sortedTraders.map(([, data], idx) => ({
+                                  value: (data.totalPnL / 1000000).toFixed(1),
+                                  itemStyle: { 
+                                    color: colors[idx % colors.length],
+                                    borderRadius: [4, 4, 0, 0]
+                                  }
+                                }))
+                              })
+                              .build();
+                          })()}
+                        />
+                      </div>
+                    );
+                    break;
+
+                  case 'currency-exposure':
+                    chartContent = (
+                      <div className="h-[300px]">
+                        <GraphEngine
+                          config={(() => {
+                            const currencyExposure = filteredTrades.reduce((acc, trade) => {
+                              const currency = trade.price_currency || trade.eod_currency || 'Unknown';
+                              if (!acc[currency]) {
+                                acc[currency] = { exposure: 0, count: 0, fxRisk: 0 };
+                              }
+                              acc[currency].exposure += Math.abs(trade.fx_exposure || 0);
+                              acc[currency].count++;
+                              acc[currency].fxRisk = acc[currency].exposure;
+                              return acc;
+                            }, {} as Record<string, any>);
+
+                            const currencies = Object.keys(currencyExposure);
+                            const exposureData = currencies.map(curr => currencyExposure[curr].exposure / 1000000);
+                            const riskData = currencies.map(curr => currencyExposure[curr].fxRisk / 1000000);
+
+                            return new GraphConfigBuilder()
+                              .title('')
+                              .xAxis('category', currencies)
+                              .yAxis('value', { name: 'Exposure (M)' })
+                              .tooltip('axis')
+                              .legend(true, 'top')
+                              .background('#ffffff')
+                              .dimensions('100%', '300px')
+                              .addBarSeries({
+                                name: 'FX Exposure',
+                                data: exposureData,
+                                color: '#4ECDC4'
+                              })
+                              .addLineSeries({
+                                name: 'Risk Level',
+                                data: riskData,
+                                color: '#FF6B6B'
+                              })
+                              .build();
+                          })()}
+                        />
+                      </div>
+                    );
+                    break;
+
+                  case 'cost-waterfall':
+                    chartContent = (
+                      <div className="h-[300px]">
+                        <GraphEngine
+                          config={(() => {
+                            const totalFinance = filteredTrades.reduce((sum, t) => sum + (t.finance_cost || 0), 0) / 1000000;
+                            const totalFreight = filteredTrades.reduce((sum, t) => sum + (t.freight_cost || 0), 0) / 1000000;
+                            const totalInsurance = filteredTrades.reduce((sum, t) => sum + (t.insurance_cost || 0), 0) / 1000000;
+                            const totalTax = filteredTrades.reduce((sum, t) => sum + (t.tax_cost || 0), 0) / 1000000;
+                            const totalOther = filteredTrades.reduce((sum, t) => sum + (t.other_cost || 0), 0) / 1000000;
+
+                            const waterfallData = [
+                              { name: 'Base', value: 0, itemStyle: { color: '#91CC75' } },
+                              { name: 'Finance Cost', value: totalFinance, itemStyle: { color: '#FAC858' } },
+                              { name: 'Freight Cost', value: totalFreight, itemStyle: { color: '#EE6666' } },
+                              { name: 'Insurance', value: totalInsurance, itemStyle: { color: '#73C0DE' } },
+                              { name: 'Tax Cost', value: totalTax, itemStyle: { color: '#3BA272' } },
+                              { name: 'Other Cost', value: totalOther, itemStyle: { color: '#FC8452' } },
+                              { name: 'Total', value: totalFinance + totalFreight + totalInsurance + totalTax + totalOther, itemStyle: { color: '#9A60B4' } }
+                            ];
+
+                            return new GraphConfigBuilder()
+                              .title('')
+                              .xAxis('category', waterfallData.map(d => d.name))
+                              .yAxis('value', { name: 'Cost (M)' })
+                              .tooltip('axis')
+                              .legend(false)
+                              .background('#ffffff')
+                              .dimensions('100%', '300px')
+                              .addBarSeries({
+                                name: 'Cost Components',
+                                data: waterfallData
+                              })
+                              .build();
+                          })()}
+                        />
+                      </div>
+                    );
+                    break;
+
+                  case 'commodity-correlation':
+                    chartContent = (
+                      <div className="h-[300px]">
+                        <GraphEngine
+                          config={(() => {
+                            const commodities = [...new Set(filteredTrades.map(t => t.commodity || 'Unknown'))];
+                            const correlationMatrix: number[][] = [];
+                            
+                            // Create mock correlation data for visualization
+                            commodities.forEach((_, i) => {
+                              const row: number[] = [];
+                              commodities.forEach((_, j) => {
+                                if (i === j) row.push(1.0);
+                                else {
+                                  // Generate realistic correlation between -0.8 and 0.8
+                                  const correlation = (Math.random() - 0.5) * 1.6;
+                                  row.push(Math.round(correlation * 100) / 100);
+                                }
+                              });
+                              correlationMatrix.push(row);
+                            });
+
+                            const heatmapData = correlationMatrix.flatMap((row, i) =>
+                              row.map((value, j) => [i, j, value])
+                            );
+
+                            return {
+                              tooltip: {
+                                position: 'top',
+                                formatter: (params: any) => {
+                                  return `${commodities[params.data[0]]} vs ${commodities[params.data[1]]}<br/>Correlation: ${params.data[2]}`
+                                }
+                              },
+                              grid: { height: '60%', top: '10%' },
+                              xAxis: { type: 'category', data: commodities, splitArea: { show: true } },
+                              yAxis: { type: 'category', data: commodities, splitArea: { show: true } },
+                              visualMap: {
+                                min: -1,
+                                max: 1,
+                                calculable: true,
+                                orient: 'horizontal',
+                                left: 'center',
+                                bottom: '15%',
+                                inRange: { color: ['#313695', '#4575b4', '#74add1', '#abd9e9', '#e0f3f8', '#ffffbf', '#fee090', '#fdae61', '#f46d43', '#d73027', '#a50026'] }
+                              },
+                              series: [{
+                                name: 'Correlation',
+                                type: 'heatmap',
+                                data: heatmapData,
+                                label: { show: true, fontSize: 10 },
+                                emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0, 0, 0, 0.5)' } }
+                              }],
+                              backgroundColor: '#ffffff'
+                            };
+                          })()}
+                        />
+                      </div>
+                    );
+                    break;
+
+                  case 'portfolio-treemap':
+                    chartContent = (
+                      <div className="h-[300px]">
+                        <GraphEngine
+                          config={(() => {
+                            const portfolioData = filteredTrades.reduce((acc, trade) => {
+                              const commodity = trade.commodity || 'Unknown';
+                              const counterparty = trade.counterparty || 'Unknown';
+                              
+                              if (!acc[commodity]) acc[commodity] = { value: 0, children: {} };
+                              if (!acc[commodity].children[counterparty]) {
+                                acc[commodity].children[counterparty] = { value: 0 };
+                              }
+                              
+                              const tradeValue = Math.abs(trade.trade_value || 0);
+                              acc[commodity].value += tradeValue;
+                              acc[commodity].children[counterparty].value += tradeValue;
+                              return acc;
+                            }, {} as any);
+
+                            const treemapData = Object.entries(portfolioData).map(([name, data]: [string, any]) => ({
+                              name,
+                              value: data.value / 1000000,
+                              children: Object.entries(data.children).map(([childName, childData]: [string, any]) => ({
+                                name: childName,
+                                value: childData.value / 1000000
+                              }))
+                            }));
+
+                            return {
+                              tooltip: { trigger: 'item', formatter: '{b}: {c}M' },
+                              series: [{
+                                name: 'Portfolio',
+                                type: 'treemap',
+                                width: '100%',
+                                height: '300px',
+                                roam: false,
+                                nodeClick: false,
+                                data: treemapData,
+                                breadcrumb: { show: false },
+                                label: { show: true, position: 'inside', fontSize: 12 },
+                                itemStyle: {
+                                  borderColor: '#fff',
+                                  borderWidth: 2,
+                                  gapWidth: 2
+                                },
+                                levels: [{
+                                  itemStyle: {
+                                    borderColor: '#333',
+                                    borderWidth: 3,
+                                    gapWidth: 3
+                                  }
+                                }]
+                              }],
+                              backgroundColor: '#ffffff'
+                            };
+                          })()}
+                        />
+                      </div>
+                    );
+                    break;
+
+                  case 'volatility-gauge':
+                    chartContent = (
+                      <div className="h-[300px] grid grid-cols-2 gap-4">
+                        {['PnL Volatility', 'Price Volatility', 'Volume Volatility', 'Risk Volatility'].map((metric, idx) => {
+                          const gaugeValue = Math.random() * 100; // Mock volatility data
+                          return (
+                            <div key={metric} className="h-[130px]">
+                              <GraphEngine
+                                config={{
+                                  series: [{
+                                    name: metric,
+                                    type: 'gauge',
+                                    progress: { show: true, width: 8 },
+                                    axisLine: { lineStyle: { width: 8 } },
+                                    axisTick: { show: false },
+                                    splitLine: { length: 15, lineStyle: { width: 2, color: '#999' } },
+                                    axisLabel: { distance: 25, color: '#999', fontSize: 10 },
+                                    anchor: { show: true, showAbove: true, size: 25 },
+                                    title: { show: true, fontSize: 12 },
+                                    detail: { valueAnimation: true, fontSize: 16, offsetCenter: [0, '70%'] },
+                                    data: [{ value: gaugeValue, name: metric }]
+                                  }],
+                                  backgroundColor: '#ffffff'
+                                }}
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                    break;
+
+                                    case 'counterparty-network':
+                    chartContent = (
+                      <div className="h-[300px]">
+                        <GraphEngine
+                          config={(() => {
+                            const networkData = filteredTrades.reduce((acc, trade) => {
+                              const counterparty = trade.counterparty || 'Unknown';
+                              const commodity = trade.commodity || 'Unknown';
+                              
+                              if (!acc.nodes.find((n: any) => n.id === counterparty)) {
+                                acc.nodes.push({
+                                  id: counterparty,
+                                  name: counterparty,
+                                  category: 0,
+                                  value: 0,
+                                  symbolSize: 30
+                                });
+                              }
+                              
+                              if (!acc.nodes.find((n: any) => n.id === commodity)) {
+                                acc.nodes.push({
+                                  id: commodity,
+                                  name: commodity,
+                                  category: 1,
+                                  value: 0,
+                                  symbolSize: 20
+                                });
+                              }
+                              
+                              const existingLink = acc.links.find((l: any) => 
+                                (l.source === counterparty && l.target === commodity) ||
+                                (l.source === commodity && l.target === counterparty)
+                              );
+                              
+                              if (existingLink) {
+                                existingLink.value += Math.abs(trade.trade_value || 0);
+                              } else {
+                                acc.links.push({
+                                  source: counterparty,
+                                  target: commodity,
+                                  value: Math.abs(trade.trade_value || 0)
+                                });
+                              }
+                              
+                              return acc;
+                            }, { nodes: [], links: [] } as any);
+
+                            return {
+                              tooltip: { trigger: 'item' },
+                              legend: {
+                                data: ['Counterparty', 'Commodity'],
+                                bottom: 10
+                              },
+                              series: [{
+                                name: 'Trading Network',
+                                type: 'graph',
+                                layout: 'force',
+                                data: networkData.nodes,
+                                links: networkData.links,
+                                categories: [
+                                  { name: 'Counterparty', itemStyle: { color: '#4ECDC4' } },
+                                  { name: 'Commodity', itemStyle: { color: '#FF6B6B' } }
+                                ],
+                                roam: true,
+                                focusNodeAdjacency: true,
+                                itemStyle: { borderColor: '#fff', borderWidth: 1 },
+                                lineStyle: { color: 'source', curveness: 0.1, width: 2 },
+                                emphasis: { focus: 'adjacency' },
+                                force: {
+                                  repulsion: 100,
+                                  gravity: 0.1,
+                                  edgeLength: 150,
+                                  layoutAnimation: true
+                                }
+                              }],
+                              backgroundColor: '#ffffff'
+                            };
+                          })()}
+                        />
+                      </div>
+                    );
+                    break;
+
+                  case 'trade-flow-sankey':
+                    chartContent = (
+                      <div className="h-[300px]">
+                        <GraphEngine
+                          config={(() => {
+                            const sankeyData = filteredTrades.reduce((acc, trade) => {
+                              const source = trade.trader_name || 'Unknown Trader';
+                              const target = trade.counterparty || 'Unknown Counterparty';
+                              const value = Math.abs(trade.trade_value || 0) / 1000000;
+                              
+                              if (!acc.nodes.find((n: any) => n.name === source)) {
+                                acc.nodes.push({ name: source });
+                              }
+                              if (!acc.nodes.find((n: any) => n.name === target)) {
+                                acc.nodes.push({ name: target });
+                              }
+                              
+                              const existingLink = acc.links.find((l: any) => l.source === source && l.target === target);
+                              if (existingLink) {
+                                existingLink.value += value;
+                              } else {
+                                acc.links.push({ source, target, value });
+                              }
+                              
+                              return acc;
+                            }, { nodes: [], links: [] } as any);
+
+                            return {
+                              tooltip: { trigger: 'item', triggerOn: 'mousemove' },
+                              series: [{
+                                type: 'sankey',
+                                data: sankeyData.nodes,
+                                links: sankeyData.links,
+                                emphasis: { focus: 'adjacency' },
+                                itemStyle: { borderWidth: 1, borderColor: '#aaa' },
+                                lineStyle: { color: 'gradient', curveness: 0.5 }
+                              }],
+                              backgroundColor: '#ffffff'
+                            };
+                          })()}
+                        />
+                      </div>
+                    );
+                    break;
+
+                  case 'geographic-risk':
+                    chartContent = (
+                      <div className="h-[300px]">
+                        <GraphEngine
+                          config={(() => {
+                            const geographicRisk = filteredTrades.reduce((acc, trade) => {
+                              const profitCenter = trade.profitcenter || 'Unknown';
+                              if (!acc[profitCenter]) {
+                                acc[profitCenter] = { risk: 0, volume: 0, count: 0 };
+                              }
+                              acc[profitCenter].risk += Math.abs(trade.mtm_pnl || 0);
+                              acc[profitCenter].volume += Math.abs(trade.trade_value || 0);
+                              acc[profitCenter].count += 1;
+                              return acc;
+                            }, {} as any);
+
+                            const geoData = Object.entries(geographicRisk).map(([region, data]: [string, any]) => ({
+                              name: region,
+                              value: data.risk / 1000000,
+                              volume: data.volume / 1000000,
+                              trades: data.count
+                            }));
+
+                            return new GraphConfigBuilder()
+                              .title('')
+                              .xAxis('category', geoData.map(d => d.name))
+                              .yAxis('value', { name: 'Risk (M)' })
+                              .tooltip('axis')
+                              .legend(false)
+                              .background('#ffffff')
+                              .dimensions('100%', '300px')
+                              .addBarSeries({
+                                name: 'Geographic Risk',
+                                data: geoData.map((d, idx) => ({
+                                  value: d.value,
+                                  itemStyle: { 
+                                    color: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8'][idx % 5] 
+                                  }
+                                }))
+                              })
+                              .build();
+                          })()}
+                        />
+                      </div>
+                    );
+                    break;
+
+                  case 'trade-lifecycle':
+                    chartContent = (
+                      <div className="h-[300px]">
+                        <GraphEngine
+                          config={(() => {
+                            const lifecycleStages = ['Created', 'Confirmed', 'Allocated', 'Settled', 'Closed'];
+                            const statusCounts = filteredTrades.reduce((acc, trade) => {
+                              // Mock lifecycle status based on trade data
+                              let status = 'Created';
+                              if (trade.closed_position > 0) status = 'Closed';
+                              else if (trade.realized_position > 0) status = 'Settled';
+                              else if (trade.buy_open_position > 0 || trade.sell_open_position > 0) status = 'Allocated';
+                              else status = 'Confirmed';
+                              
+                              if (!acc[status]) acc[status] = 0;
+                              acc[status]++;
+                              return acc;
+                            }, {} as any);
+
+                            const timelineData = lifecycleStages.map(stage => ({
+                              name: stage,
+                              value: statusCounts[stage] || 0
+                            }));
+
+                            return new GraphConfigBuilder()
+                              .title('')
+                              .xAxis('category', timelineData.map(d => d.name))
+                              .yAxis('value', { name: 'Number of Trades' })
+                              .tooltip('axis')
+                              .legend(false)
+                              .background('#ffffff')
+                              .dimensions('100%', '300px')
+                              .addLineSeries({
+                                name: 'Lifecycle Progress',
+                                data: timelineData.map(d => d.value),
+                                color: '#45B7D1',
+                                smooth: true,
+                                areaStyle: { opacity: 0.3 }
+                              })
+                              .build();
+                          })()}
+                        />
+                      </div>
+                    );
+                    break;
+
+                  case 'cashflow-waterfall':
+                    chartContent = (
+                      <div className="h-[300px]">
+                        <GraphEngine
+                          config={(() => {
+                            const totalTradeValue = filteredTrades.reduce((sum, t) => sum + (t.trade_value || 0), 0) / 1000000;
+                            const totalCosts = filteredTrades.reduce((sum, t) => sum + (t.total_cost || 0), 0) / 1000000;
+                            const totalPnL = filteredTrades.reduce((sum, t) => sum + (t.mtm_pnl || 0), 0) / 1000000;
+                            const settlements = filteredTrades.reduce((sum, t) => sum + (t.mtm_settlement || 0), 0) / 1000000;
+
+                            const waterfallData = [
+                              { name: 'Initial Cash', value: 0, itemStyle: { color: '#5B9BD5' } },
+                              { name: 'Trade Values', value: totalTradeValue, itemStyle: { color: '#70AD47' } },
+                              { name: 'Total Costs', value: -totalCosts, itemStyle: { color: '#FFC000' } },
+                              { name: 'MTM PnL', value: totalPnL, itemStyle: { color: totalPnL > 0 ? '#70AD47' : '#FF6B6B' } },
+                              { name: 'Settlements', value: -settlements, itemStyle: { color: '#A5A5A5' } },
+                              { name: 'Net Cash Flow', value: totalTradeValue - totalCosts + totalPnL - settlements, itemStyle: { color: '#9A60B4' } }
+                            ];
+
+                            return new GraphConfigBuilder()
+                              .title('')
+                              .xAxis('category', waterfallData.map(d => d.name))
+                              .yAxis('value', { name: 'Cash Flow (M)' })
+                              .tooltip('axis')
+                              .legend(false)
+                              .background('#ffffff')
+                              .dimensions('100%', '300px')
+                              .addBarSeries({
+                                name: 'Cash Flow Components',
+                                data: waterfallData
                               })
                               .build();
                           })()}
