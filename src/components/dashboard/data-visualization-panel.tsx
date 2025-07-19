@@ -56,7 +56,65 @@ import {
 import ReactECharts from 'echarts-for-react';
 import * as echarts from 'echarts';
 import { Trade } from '@/lib/types';
+import { ChartInfoButton } from '@/components/ui/chart-info-button';
 import ToastBanner from '../toast-banner';
+
+// Get chart information based on chart type
+const getVisualizationChartInfo = (chartType: string, subType?: string) => {
+  const infoMap: Record<string, { description: string; insights: string[]; dataSource?: string }> = {
+    column: {
+      description: "Column charts compare values across categories using vertical bars. They're ideal for showing discrete data categories and comparing quantities between different groups.",
+      insights: [
+        "Best for comparing values across 3-10 categories",
+        "Height of bars makes differences easy to identify",
+        "Effective for showing changes over time periods"
+      ],
+      dataSource: "Selected data fields aggregated by chosen categories"
+    },
+    line: {
+      description: "Line charts show trends over time by connecting data points. They're perfect for displaying continuous data and identifying patterns, trends, or changes over periods.",
+      insights: [
+        "Excellent for showing trends and patterns over time",
+        "Can display multiple data series for comparison",
+        "Helps identify seasonal patterns or cyclical behavior"
+      ],
+      dataSource: "Time-series data from your selected fields"
+    },
+    pie: {
+      description: "Pie charts show parts of a whole, displaying proportional relationships. Each slice represents a percentage of the total, making it easy to see relative contributions.",
+      insights: [
+        "Shows proportional relationships clearly",
+        "Best for displaying 3-7 categories maximum",
+        "Helps identify dominant categories in your data"
+      ],
+      dataSource: "Categorical data aggregated to show proportions"
+    },
+    area: {
+      description: "Area charts combine line charts with filled areas underneath, emphasizing the magnitude of change over time and cumulative totals.",
+      insights: [
+        "Emphasizes volume and magnitude of changes",
+        "Good for showing cumulative effects over time",
+        "Stacked areas show contribution of each category"
+      ],
+      dataSource: "Time-based data with cumulative values"
+    },
+    scatter: {
+      description: "Scatter plots show relationships between two numeric variables. Each point represents a single data record, making correlations and patterns visible.",
+      insights: [
+        "Reveals correlations between two variables",
+        "Identifies outliers and data clusters",
+        "Shows distribution patterns in your data"
+      ],
+      dataSource: "Paired numeric values from your dataset"
+    }
+  };
+
+  return infoMap[chartType] || {
+    description: "Custom visualization created from your selected data fields.",
+    insights: ["Explore your data through interactive visualization", "Adjust fields and filters to discover new insights"],
+    dataSource: "Your selected data fields and applied filters"
+  };
+};
 
 // Types
 interface ColumnInfo {
@@ -1289,9 +1347,17 @@ export function DataVisualizationPanel({ data, isVisible, onClose }: DataVisuali
 
             <Card className="flex-1">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm">
-                  {chartTitle || 'Chart Preview'}
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm">
+                    {chartTitle || 'Chart Preview'}
+                  </CardTitle>
+                  <ChartInfoButton
+                    title={chartTitle || `${chartType.charAt(0).toUpperCase() + chartType.slice(1)} Chart`}
+                    description={getVisualizationChartInfo(chartType).description}
+                    dataSource={getVisualizationChartInfo(chartType).dataSource}
+                    insights={getVisualizationChartInfo(chartType).insights}
+                  />
+                </div>
               </CardHeader>
               <CardContent>
                 {error && <ToastBanner type="error" message={error} onClose={() => setError(null)} />}
