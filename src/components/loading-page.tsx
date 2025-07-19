@@ -58,7 +58,7 @@ const LoadingPage: React.FC<LoadingPageProps> = ({ onLoadingComplete }) => {
         }
         return prev + 1;
       });
-    }, 30);
+    }, 60);
 
     return () => clearInterval(interval);
   }, [onLoadingComplete]);
@@ -69,7 +69,7 @@ const LoadingPage: React.FC<LoadingPageProps> = ({ onLoadingComplete }) => {
         const currentIndex = loadingPhases.indexOf(prev);
         return loadingPhases[(currentIndex + 1) % loadingPhases.length];
       });
-    }, 800);
+    }, 1200);
 
     return () => clearInterval(phaseInterval);
   }, []);
@@ -77,7 +77,7 @@ const LoadingPage: React.FC<LoadingPageProps> = ({ onLoadingComplete }) => {
   useEffect(() => {
     const teamInterval = setInterval(() => {
       setCurrentTeamMember(prev => (prev + 1) % teamMembers.length);
-    }, 600);
+    }, 1000);
 
     return () => clearInterval(teamInterval);
   }, []);
@@ -189,6 +189,54 @@ const LoadingPage: React.FC<LoadingPageProps> = ({ onLoadingComplete }) => {
                 <span className="font-semibold">{member}</span>
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* Powered by Taomish */}
+        <div className="space-y-2 animate-slide-up mt-8">
+          <div className="flex items-center justify-center space-x-4">
+            <span className="text-lg text-slate-200 font-semibold animate-pulse bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent drop-shadow-lg" style={{ textShadow: '0 0 20px rgba(56, 189, 248, 0.5)' }}>
+              Powered by
+            </span>
+            <div className="flex items-center space-x-4">
+              <div className="relative">
+                <Image
+                  src="/logo-dark-mode.png"
+                  alt="Taomish Logo"
+                  width={180}
+                  height={60}
+                  className="object-contain"
+                  onError={(e) => {
+                    // Fallback to text if image fails to load
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    const parent = target.parentElement;
+                    if (parent) {
+                      parent.innerHTML = '<span class="text-2xl font-bold bg-gradient-to-r from-green-400 to-blue-400 bg-clip-text text-transparent px-2">Taomish</span>';
+                    }
+                  }}
+                />
+              </div>
+              <div className="relative w-16 h-10">
+                <Image
+                  src="/waving-indian-flag-design-with-blue-chakra.png"
+                  alt="Indian Flag"
+                  width={64}
+                  height={40}
+                  className="object-contain"
+                  onError={(e) => {
+                    // Fallback to emoji if image fails to load
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    const parent = target.parentElement;
+                    if (parent) {
+                      parent.innerHTML = '🇮🇳';
+                      parent.className = 'text-3xl flex items-center justify-center';
+                    }
+                  }}
+                />
+              </div>
+            </div>
           </div>
         </div>
 
