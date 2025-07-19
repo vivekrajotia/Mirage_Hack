@@ -2,7 +2,7 @@ export interface Widget {
   id: string;
   title: string;
   component: 'metric' | 'chart';
-  type: 'total-pnl' | 'profitable-trades' | 'losing-trades' | 'total-trades' | 'risk-heatmap' | 'top-risks' | 'risk-trend' | 'risk-impact' | 'trade-distribution' | 'performance-center' | 'position-utilization' | 'monthly-risk';
+  type: 'total-pnl' | 'profitable-trades' | 'losing-trades' | 'total-trades' | 'risk-heatmap' | 'top-risks' | 'risk-trend' | 'risk-impact' | 'trade-distribution' | 'performance-center' | 'position-utilization' | 'monthly-risk' | 'cost-structure' | 'trade-value-pnl';
   gridCols?: string; // Tailwind grid column classes
   visible: boolean;
   order: number;
@@ -119,6 +119,24 @@ export const DEFAULT_WIDGETS: Widget[] = [
     gridCols: 'lg:col-span-1',
     visible: true,
     order: 11
+  },
+  {
+    id: 'cost-structure',
+    title: 'Cost Structure Breakdown',
+    component: 'chart',
+    type: 'cost-structure',
+    gridCols: 'lg:col-span-1',
+    visible: true,
+    order: 12
+  },
+  {
+    id: 'trade-value-pnl',
+    title: 'Trade Value vs PnL Analysis',
+    component: 'chart',
+    type: 'trade-value-pnl',
+    gridCols: 'lg:col-span-1',
+    visible: true,
+    order: 13
   }
 ];
 

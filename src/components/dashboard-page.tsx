@@ -241,9 +241,10 @@ const DashboardPage: React.FC = () => {
           </SidebarContent>
         </Sidebar>
         
-        <SidebarInset className="bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-800">
-          {/* Enhanced Header with Navigation Actions */}
-          <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-6 shadow-sm">
+        <SidebarInset className="bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-800 flex flex-col h-screen">
+          {/* Enhanced Header with Navigation Actions - Fixed Position */}
+          <header className="fixed top-0 right-0 z-50 flex h-16 items-center justify-between border-b bg-white/95 dark:bg-slate-900/95 backdrop-blur-lg px-6 shadow-lg" 
+                  style={{ left: 'var(--sidebar-width, 16rem)', width: 'calc(100vw - var(--sidebar-width, 16rem))' }}>
             <div className="flex items-center gap-4">
               <SidebarTrigger className="hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200" />
               <div className="flex flex-col">
@@ -259,111 +260,112 @@ const DashboardPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Action Toolbar - Only show for dashboard */}
+            {/* Action Toolbar - Fixed at right end */}
             {activeItem !== 'reports' && (
-              <div className="flex items-center gap-2">
-              {/* Quick Actions Dropdown */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="outline" size="sm" className="h-8">
-                        <Settings2 className="h-4 w-4 mr-1" />
-                        <span className="hidden sm:inline">Quick Actions</span>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Quick Actions</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>Dashboard Actions</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleRefreshData}>
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    Refresh Data
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setIsAICanvasOpen(true)}>
-                    <Bot className="mr-2 h-4 w-4" />
-                    Open AI Canvas
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleOpenVisualization}>
-                    <BarChart3 className="mr-2 h-4 w-4" />
-                    Data Visualization
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleExportCSV}>
-                    <Download className="mr-2 h-4 w-4" />
-                    Export to CSV
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleSendInsights}>
-                    <Send className="mr-2 h-4 w-4" />
-                    Send AI Insights
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                {/* Quick Actions Dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="outline" size="sm" className="h-8 flex-shrink-0">
+                          <Settings2 className="h-4 w-4 mr-1" />
+                          <span className="hidden sm:inline">Quick Actions</span>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Quick Actions</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuLabel>Dashboard Actions</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleRefreshData}>
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      Refresh Data
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setIsAICanvasOpen(true)}>
+                      <Bot className="mr-2 h-4 w-4" />
+                      Open AI Canvas
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleOpenVisualization}>
+                      <BarChart3 className="mr-2 h-4 w-4" />
+                      Data Visualization
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleExportCSV}>
+                      <Download className="mr-2 h-4 w-4" />
+                      Export to CSV
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleSendInsights}>
+                      <Send className="mr-2 h-4 w-4" />
+                      Send AI Insights
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
-              {/* Export Actions */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-8" onClick={handleExportCSV}>
-                    <Download className="h-4 w-4 mr-1" />
-                    <span className="hidden sm:inline">Export</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Export Data to CSV</p>
-                </TooltipContent>
-              </Tooltip>
+                {/* Export Actions */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-8 flex-shrink-0" onClick={handleExportCSV}>
+                      <Download className="h-4 w-4 mr-1" />
+                      <span className="hidden sm:inline">Export</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Export Data to CSV</p>
+                  </TooltipContent>
+                </Tooltip>
 
-              {/* Visualization Toggle */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-8" onClick={handleOpenVisualization}>
-                    <PieChart className="h-4 w-4 mr-1" />
-                    <span className="hidden sm:inline">Visualize</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Open Data Visualization Panel</p>
-                </TooltipContent>
-              </Tooltip>
+                {/* Visualization Toggle */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-8 flex-shrink-0" onClick={handleOpenVisualization}>
+                      <PieChart className="h-4 w-4 mr-1" />
+                      <span className="hidden sm:inline">Visualize</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Open Data Visualization Panel</p>
+                  </TooltipContent>
+                </Tooltip>
 
-              {/* AI Insights */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="h-8 bg-gradient-to-r from-purple-500/10 to-blue-500/10 border-purple-200 dark:border-purple-700 hover:from-purple-500/20 hover:to-blue-500/20"
-                    onClick={handleSendInsights}
-                  >
-                    <Mail className="h-4 w-4 mr-1" />
-                    <span className="hidden sm:inline">AI Insights</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Send AI-Generated Insights via Email</p>
-                </TooltipContent>
-              </Tooltip>
+                {/* AI Insights */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="h-8 flex-shrink-0 bg-gradient-to-r from-purple-500/10 to-blue-500/10 border-purple-200 dark:border-purple-700 hover:from-purple-500/20 hover:to-blue-500/20"
+                      onClick={handleSendInsights}
+                    >
+                      <Mail className="h-4 w-4 mr-1" />
+                      <span className="hidden sm:inline">AI Insights</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Send AI-Generated Insights via Email</p>
+                  </TooltipContent>
+                </Tooltip>
 
-              {/* Refresh Button */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-8" onClick={handleRefreshData}>
-                    <RefreshCw className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Refresh Dashboard Data</p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
+                {/* Refresh Button */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-8 flex-shrink-0" onClick={handleRefreshData}>
+                      <RefreshCw className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Refresh Dashboard Data</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
             )}
           </header>
 
-          <main className="flex-1 overflow-auto">
+          {/* Main content area with proper top padding to account for fixed header */}
+          <main className="flex-1 overflow-auto pt-16">
             {activeItem === 'reports' ? (
               <ReportsPage />
             ) : (

@@ -40,7 +40,8 @@ import { Badge } from '@/components/ui/badge';
 import { DatePickerWithRange } from '@/components/ui/date-picker';
 import { PnlChart } from './pnl-chart';
 import { DataTable } from './data-table';
-import { GraphEngine, GraphConfigBuilder } from '@/components/graph-engine';
+import { GraphEngine } from '@/components/graph-engine';
+import { GraphConfigBuilder } from '@/components/graph-engine/graph-config-builder';
 import { allColumns, defaultVisibleColumns } from './columns';
 import { ColumnSelector } from './column-selector';
 import { FilterSelector, FilterState } from './filter-selector';
@@ -884,6 +885,74 @@ export const DashboardClient = React.forwardRef<DashboardClientHandle, {}>((prop
                     );
                     break;
 
+                  case 'cost-structure':
+                    chartContent = (
+                      <div className="h-[300px]">
+                        <GraphEngine
+                          config={(() => {
+                            const totalFinanceCost = filteredTrades.reduce((sum, trade) => sum + (trade.finance_cost || 0), 0);
+                            const totalFreightCost = filteredTrades.reduce((sum, trade) => sum + (trade.freight_cost || 0), 0);
+                            const totalInsuranceCost = filteredTrades.reduce((sum, trade) => sum + (trade.insurance_cost || 0), 0);
+                            const totalOtherCost = filteredTrades.reduce((sum, trade) => sum + (trade.other_cost || 0), 0);
+
+                            const costData = [
+                              { name: 'Finance', value: totalFinanceCost },
+                              { name: 'Freight', value: totalFreightCost },
+                              { name: 'Insurance', value: totalInsuranceCost },
+                              { name: 'Other', value: totalOtherCost }
+                            ].filter(item => item.value > 0);
+
+                            return new GraphConfigBuilder()
+                              .title('')
+                              .tooltip('item')
+                              .legend(true, 'right')
+                              .background('#ffffff')
+                              .dimensions('100%', '300px')
+                              .addPieSeries({
+                                name: 'Cost Types',
+                                data: costData,
+                                radius: ['40%', '70%']
+                              })
+                              .build();
+                          })()}
+                        />
+                      </div>
+                    );
+                    break;
+
+                  case 'trade-value-pnl':
+                    chartContent = (
+                      <div className="h-[300px]">
+                        <GraphEngine
+                          config={(() => {
+                            const scatterData: [number, number][] = filteredTrades
+                              .filter(trade => trade.trade_value && trade.mtm_pnl)
+                              .slice(0, 100) // Limit points for performance
+                              .map(trade => [
+                                trade.trade_value / 1000000, // X: Trade Value in millions
+                                trade.mtm_pnl / 1000000      // Y: PnL in millions
+                              ] as [number, number]);
+
+                            return new GraphConfigBuilder()
+                              .title('')
+                              .xAxis('value', undefined, { name: 'Trade Value (M)' })
+                              .yAxis('value', { name: 'PnL (M)' })
+                              .tooltip('item')
+                              .legend(false)
+                              .background('#ffffff')
+                              .dimensions('100%', '300px')
+                              .addScatterSeries({
+                                name: 'Trade Points',
+                                data: scatterData,
+                                symbolSize: 6
+                              })
+                              .build();
+                          })()}
+                        />
+                      </div>
+                    );
+                    break;
+
                   default:
                     chartContent = <div className="h-[300px] flex items-center justify-center text-muted-foreground">Chart not implemented</div>;
                 }
@@ -908,84 +977,7 @@ export const DashboardClient = React.forwardRef<DashboardClientHandle, {}>((prop
         </Collapsible>
       )}
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Cost Structure Analysis */}
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">Cost Structure Breakdown</CardTitle>
-          </CardHeader>
-          <CardContent className="pl-2">
-            <div className="h-[300px]">
-              <GraphEngine
-                config={(() => {
-                  const totalFinanceCost = filteredTrades.reduce((sum, trade) => sum + (trade.finance_cost || 0), 0);
-                  const totalFreightCost = filteredTrades.reduce((sum, trade) => sum + (trade.freight_cost || 0), 0);
-                  const totalInsuranceCost = filteredTrades.reduce((sum, trade) => sum + (trade.insurance_cost || 0), 0);
-                  const totalOtherCost = filteredTrades.reduce((sum, trade) => sum + (trade.other_cost || 0), 0);
 
-                  const costData = [
-                    { name: 'Finance', value: totalFinanceCost },
-                    { name: 'Freight', value: totalFreightCost },
-                    { name: 'Insurance', value: totalInsuranceCost },
-                    { name: 'Other', value: totalOtherCost }
-                  ].filter(item => item.value > 0);
-
-                  return new GraphConfigBuilder()
-                    .title('')
-                    .tooltip('item')
-                    .legend(true, 'right')
-                    .background('#ffffff')
-                    .dimensions('100%', '300px')
-                    .addPieSeries({
-                      name: 'Cost Types',
-                      data: costData,
-                      radius: ['40%', '70%']
-                    })
-                    .build();
-                })()}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Error/Defect Rate - Trade Value vs PnL Scatter */}
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">Trade Value vs PnL Analysis</CardTitle>
-          </CardHeader>
-          <CardContent className="pl-2">
-            <div className="h-[300px]">
-              <GraphEngine
-                config={(() => {
-                  const scatterData = filteredTrades
-                    .filter(trade => trade.trade_value && trade.mtm_pnl)
-                    .slice(0, 100) // Limit points for performance
-                    .map(trade => [
-                      trade.trade_value / 1000000, // X: Trade Value in millions
-                      trade.mtm_pnl / 1000000      // Y: PnL in millions
-                    ]);
-
-                  return new GraphConfigBuilder()
-                    .title('')
-                    .xAxis('value', undefined, { name: 'Trade Value (M)' })
-                    .yAxis('value', { name: 'PnL (M)' })
-                    .tooltip('item')
-                    .legend(false)
-                    .background('#ffffff')
-                    .dimensions('100%', '300px')
-                    .addScatterSeries({
-                      name: 'Trade Points',
-                      data: scatterData,
-                      symbolSize: 6
-                    })
-                    .build();
-                })()}
-              />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-      
       <Card>
         <CardHeader>
             <CardTitle>Trade History</CardTitle>
