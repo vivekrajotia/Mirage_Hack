@@ -25,7 +25,7 @@ import { Droppable } from '@/components/ui/droppable';
 import { SortableItem } from '@/components/ui/sortable-item';
 import { Item } from '@/components/ui/item';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { LayoutGrid, Search } from 'lucide-react';
+import { LayoutGrid, Search, Plus, Sparkles, Eye, Save, Zap, Layers, Palette, Wand2, MousePointer2 } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -46,7 +46,6 @@ import {
   Settings,
   CircleHelp,
   Bot,
-  Sparkles,
   FileText,
   TrendingUp,
   Settings2,
@@ -58,6 +57,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { Badge } from '@/components/ui/badge';
 import { AICanvas } from '@/components/ai-canvas';
 import Link from 'next/link';
 
@@ -65,6 +65,11 @@ interface Widget {
   id: number;
   name: string;
   type: string;
+}
+
+interface Banner {
+  type: 'success' | 'error' | 'info';
+  message: string;
 }
 
 const DashboardGenerator = () => {
@@ -78,19 +83,32 @@ const DashboardGenerator = () => {
   const [selectedSearch, setSelectedSearch] = useState('');
   const [isAICanvasOpen, setIsAICanvasOpen] = useState(false);
   const [activeItem, setActiveItem] = useState('dashboard-generator');
+  const [banner, setBanner] = useState<Banner | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchWidgets = async () => {
+      setIsLoading(true);
       try {
         const response = await fetch('/api/widgets');
         const data = await response.json();
         setWidgets({ available: data.widgets || [], selected: [] });
       } catch (error) {
         console.error('Failed to fetch widgets:', error);
+        setBanner({ type: 'error', message: 'Failed to load widgets' });
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchWidgets();
   }, []);
+
+  useEffect(() => {
+    if (banner) {
+      const timer = setTimeout(() => setBanner(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [banner]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -386,43 +404,78 @@ const DashboardGenerator = () => {
                   style={{ left: 'var(--sidebar-width, 16rem)', width: 'calc(100vw - var(--sidebar-width, 16rem))' }}>
             <div className="flex items-center gap-4">
               <SidebarTrigger className="hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200" />
-              <div className="flex flex-col">
-                <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                  Dashboard Generator
-                </h1>
-                <p className="text-sm text-slate-600 dark:text-slate-400">
-                  Drag, drop, and click to build your perfect dashboard
-                </p>
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg blur opacity-75"></div>
+                  <div className="relative bg-gradient-to-r from-purple-500 to-blue-500 p-2 rounded-lg">
+                    <Wand2 className="h-5 w-5 text-white" />
+                  </div>
+                </div>
+                <div className="flex flex-col">
+                  <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                    Dashboard Generator
+                  </h1>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    Create stunning dashboards with drag & drop
+                  </p>
+                </div>
               </div>
             </div>
 
             {/* Action Toolbar */}
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex items-center gap-3 flex-shrink-0">
+              <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200">
+                {widgets.selected.length} widgets
+              </Badge>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-8 flex-shrink-0" onClick={handlePreview}>
-                    <Settings2 className="h-4 w-4 mr-1" />
-                    <span className="hidden sm:inline">Preview & Arrange</span>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="h-9 bg-gradient-to-r from-orange-50 to-amber-50 border-orange-200 hover:from-orange-100 hover:to-amber-100 text-orange-700" 
+                    onClick={handlePreview}
+                    disabled={widgets.selected.length === 0}
+                  >
+                    <Eye className="h-4 w-4 mr-2" />
+                    Preview
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Preview Dashboard</p>
+                  <p>Preview your dashboard</p>
                 </TooltipContent>
               </Tooltip>
 
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-8 flex-shrink-0" onClick={handleSaveDashboard}>
-                    <RefreshCw className="h-4 w-4 mr-1" />
-                    <span className="hidden sm:inline">Save Dashboard</span>
+                  <Button 
+                    size="sm" 
+                    className="h-9 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white shadow-lg" 
+                    onClick={handleSaveDashboard}
+                    disabled={widgets.selected.length === 0}
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    Save Dashboard
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Save Dashboard</p>
+                  <p>Save your dashboard</p>
                 </TooltipContent>
               </Tooltip>
             </div>
           </header>
+
+          {/* Banner Notifications */}
+          {banner && (
+            <div className={`fixed top-16 right-6 left-[calc(var(--sidebar-width,16rem)+1.5rem)] z-40 p-4 rounded-lg shadow-lg border ${
+              banner.type === 'success' 
+                ? 'bg-green-50 text-green-700 border-green-200' 
+                : banner.type === 'error'
+                ? 'bg-red-50 text-red-700 border-red-200'
+                : 'bg-blue-50 text-blue-700 border-blue-200'
+            } animate-in slide-in-from-top duration-300`}>
+              <p className="font-medium">{banner.message}</p>
+            </div>
+          )}
 
           {/* Main content area with proper top padding to account for fixed header */}
           <main className="flex-1 overflow-auto pt-16">
@@ -432,72 +485,140 @@ const DashboardGenerator = () => {
               onDragStart={handleDragStart}
               onDragEnd={handleDragEnd}
             >
-              <div className="p-8 bg-gray-50 min-h-screen">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-                  <Card className="col-span-1 shadow-md">
-                    <CardHeader>
-                      <CardTitle>Available Widgets</CardTitle>
+              <div className="p-8 bg-gradient-to-br from-slate-50 via-white to-blue-50/30 min-h-screen">
+                <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
+                  {/* Widget Library */}
+                  <Card className="xl:col-span-1 shadow-xl border-0 bg-white/70 backdrop-blur-sm">
+                    <CardHeader className="bg-gradient-to-br from-blue-50 to-cyan-50 pb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="relative">
+                          <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg blur opacity-75"></div>
+                          <div className="relative bg-gradient-to-r from-blue-500 to-cyan-500 p-2 rounded-lg">
+                            <Layers className="h-5 w-5 text-white" />
+                          </div>
+                        </div>
+                        <div>
+                          <CardTitle className="text-lg font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                            Widget Library
+                          </CardTitle>
+                          <p className="text-sm text-slate-600 mt-1">
+                            Drag or click to add
+                          </p>
+                        </div>
+                      </div>
                     </CardHeader>
-                    <CardContent>
-                      <div className="relative mb-4">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <CardContent className="p-6">
+                      <div className="relative mb-6">
+                        <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                         <Input
                           placeholder="Search widgets..."
                           value={availableSearch}
                           onChange={(e) => setAvailableSearch(e.target.value)}
-                          className="pl-8"
+                          className="pl-10 bg-white/50 border-slate-200 focus:bg-white focus:border-blue-300 transition-all duration-200"
                         />
                       </div>
                       <Droppable id="available-drop">
-                        <ScrollArea className="h-96">
+                        <ScrollArea className="h-[400px]">
                           <SortableContext items={widgets.available.map(w => String(w.id))} strategy={rectSortingStrategy}>
-                            <div className="space-y-3 p-1">
-                              {filteredAvailable.map((widget) => (
-                                <div key={widget.id} onClick={() => handleClick(widget, 'available')}>
-                                  <SortableItem id={String(widget.id)}>
-                                    {widget.name}
-                                  </SortableItem>
+                            <div className="space-y-3">
+                              {isLoading ? (
+                                <div className="flex items-center justify-center py-8">
+                                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
                                 </div>
-                              ))}
+                              ) : filteredAvailable.length > 0 ? (
+                                filteredAvailable.map((widget) => (
+                                  <div key={widget.id} onClick={() => handleClick(widget, 'available')}>
+                                    <SortableItem id={String(widget.id)}>
+                                      <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-slate-200 hover:border-blue-300 hover:shadow-lg transition-all duration-200 cursor-pointer group">
+                                        <div className="w-2 h-2 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full group-hover:scale-110 transition-transform duration-200"></div>
+                                        <div className="flex-1">
+                                          <p className="font-medium text-slate-800 group-hover:text-blue-600 transition-colors duration-200">
+                                            {widget.name}
+                                          </p>
+                                          <p className="text-xs text-slate-500">
+                                            {widget.type}
+                                          </p>
+                                        </div>
+                                        <Plus className="h-4 w-4 text-slate-400 group-hover:text-blue-500 transition-colors duration-200" />
+                                      </div>
+                                    </SortableItem>
+                                  </div>
+                                ))
+                              ) : (
+                                <div className="text-center py-8 text-slate-500">
+                                  <Layers className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                                  <p>No widgets found</p>
+                                </div>
+                              )}
                             </div>
                           </SortableContext>
                         </ScrollArea>
                       </Droppable>
                     </CardContent>
                   </Card>
-                  <Card className="col-span-3 shadow-lg">
-                    <CardHeader>
-                      <Input
-                        value={dashboardName}
-                        onChange={(e) => setDashboardName(e.target.value)}
-                        className="text-2xl font-bold border-0 ring-0 focus:ring-0 focus:border-0 p-0"
-                        placeholder="Enter Dashboard Name"
-                      />
+
+                  {/* Dashboard Builder */}
+                  <Card className="xl:col-span-3 shadow-xl border-0 bg-white/70 backdrop-blur-sm">
+                    <CardHeader className="bg-gradient-to-br from-purple-50 via-white to-blue-50 pb-4">
+                      <div className="flex items-center gap-4">
+                        <div className="relative">
+                          <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg blur opacity-75"></div>
+                          <div className="relative bg-gradient-to-r from-purple-500 to-blue-500 p-2 rounded-lg">
+                            <Palette className="h-5 w-5 text-white" />
+                          </div>
+                        </div>
+                        <div className="flex-1">
+                          <Input
+                            value={dashboardName}
+                            onChange={(e) => setDashboardName(e.target.value)}
+                            className="text-2xl font-bold border-0 ring-0 focus:ring-2 focus:ring-purple-200 p-0 bg-transparent text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600 placeholder:text-slate-400"
+                            placeholder="Enter Dashboard Name"
+                          />
+                          <p className="text-sm text-slate-600 mt-1">
+                            Design your perfect dashboard layout
+                          </p>
+                        </div>
+                      </div>
                     </CardHeader>
-                    <CardContent>
-                      <div className="relative mb-4">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <CardContent className="p-6">
+                      <div className="relative mb-6">
+                        <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                         <Input
                           placeholder="Search dashboard widgets..."
                           value={selectedSearch}
                           onChange={(e) => setSelectedSearch(e.target.value)}
-                          className="pl-8"
+                          className="pl-10 bg-white/50 border-slate-200 focus:bg-white focus:border-purple-300 transition-all duration-200"
                         />
                       </div>
                       <Droppable id="dashboard-drop">
-                        <ScrollArea className="h-[32rem] bg-gray-100/50 rounded-lg p-4 border-2 border-dashed">
+                        <div className="min-h-[500px] bg-gradient-to-br from-slate-50 via-white to-purple-50/30 rounded-xl border-2 border-dashed border-slate-300 hover:border-purple-400 transition-all duration-300 p-6">
                           {widgets.selected.length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                               <SortableContext items={widgets.selected.map(w => String(w.id))} strategy={rectSortingStrategy}>
                                 {filteredSelected.map((widget) => (
                                   <div key={widget.id} onClick={() => handleClick(widget, 'selected')}>
                                     <SortableItem id={String(widget.id)}>
-                                      <Card className="hover:shadow-lg transition-shadow bg-white">
-                                        <CardHeader>
-                                          <CardTitle className="text-base">{widget.name}</CardTitle>
+                                      <Card className="hover:shadow-xl transition-all duration-300 bg-white/90 backdrop-blur-sm border-0 shadow-md group cursor-pointer">
+                                        <CardHeader className="bg-gradient-to-br from-blue-50 to-cyan-50 group-hover:from-blue-100 group-hover:to-cyan-100 transition-all duration-300">
+                                          <div className="flex items-center justify-between">
+                                            <CardTitle className="text-base font-semibold text-slate-800 group-hover:text-blue-600 transition-colors duration-300">
+                                              {widget.name}
+                                            </CardTitle>
+                                            <MousePointer2 className="h-4 w-4 text-slate-400 group-hover:text-blue-500 transition-colors duration-300" />
+                                          </div>
                                         </CardHeader>
-                                        <CardContent>
-                                          <p className="text-sm text-gray-500">{widget.type}</p>
+                                        <CardContent className="p-4">
+                                          <div className="flex items-center justify-between">
+                                            <p className="text-sm text-slate-600">
+                                              {widget.type}
+                                            </p>
+                                            <Badge variant="secondary" className="text-xs bg-blue-50 text-blue-600 border-blue-200">
+                                              Active
+                                            </Badge>
+                                          </div>
+                                          <div className="mt-3 h-16 bg-gradient-to-r from-blue-100 to-cyan-100 rounded-md flex items-center justify-center">
+                                            <BarChart2 className="h-6 w-6 text-blue-500" />
+                                          </div>
                                         </CardContent>
                                       </Card>
                                     </SortableItem>
@@ -506,13 +627,29 @@ const DashboardGenerator = () => {
                               </SortableContext>
                             </div>
                           ) : (
-                            <div className="flex flex-col items-center justify-center h-full text-center text-gray-500">
-                              <LayoutGrid className="w-16 h-16 mb-4" />
-                              <h3 className="text-xl font-semibold">Empty Dashboard</h3>
-                              <p>Drag or click widgets from the left to add them here.</p>
+                            <div className="flex flex-col items-center justify-center h-full text-center py-20">
+                              <div className="relative mb-6">
+                                <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full blur opacity-20"></div>
+                                <div className="relative bg-gradient-to-r from-purple-100 to-blue-100 p-8 rounded-full">
+                                  <Wand2 className="h-16 w-16 text-purple-600" />
+                                </div>
+                              </div>
+                              <h3 className="text-2xl font-bold text-slate-700 mb-2">
+                                Start Building
+                              </h3>
+                              <p className="text-slate-500 max-w-md mx-auto leading-relaxed">
+                                Drag widgets from the library or click on them to add to your dashboard. 
+                                Create the perfect layout for your data visualization needs.
+                              </p>
+                              <div className="flex items-center gap-2 mt-6 px-4 py-2 bg-gradient-to-r from-purple-50 to-blue-50 rounded-full">
+                                <Zap className="h-4 w-4 text-purple-500" />
+                                <span className="text-sm font-medium text-purple-600">
+                                  Tip: Click widgets to add them quickly
+                                </span>
+                              </div>
                             </div>
                           )}
-                        </ScrollArea>
+                        </div>
                       </Droppable>
                     </CardContent>
                   </Card>

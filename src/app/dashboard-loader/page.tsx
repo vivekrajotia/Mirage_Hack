@@ -33,6 +33,16 @@ import {
   Settings2,
   RefreshCw,
   LayoutGrid,
+  Play,
+  Calendar,
+  Clock,
+  Folder,
+  Search,
+  Filter,
+  Grid3x3,
+  Eye,
+  Star,
+  ArrowRight,
 } from 'lucide-react';
 import {
   TooltipProvider,
@@ -40,6 +50,15 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { AICanvas } from '@/components/ai-canvas';
 import Link from 'next/link';
 
@@ -47,29 +66,90 @@ interface Dashboard {
   id: number;
   name: string;
   updated_at: string;
+  created_at?: string;
+  widgets_count?: number;
+  description?: string;
 }
 
 const DashboardLoader = () => {
   const [dashboards, setDashboards] = useState<Dashboard[]>([]);
+  const [filteredDashboards, setFilteredDashboards] = useState<Dashboard[]>([]);
   const [isAICanvasOpen, setIsAICanvasOpen] = useState(false);
   const [activeItem, setActiveItem] = useState('dashboard-loader');
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState<'name' | 'updated' | 'created'>('updated');
   const router = useRouter();
 
   useEffect(() => {
     const fetchDashboards = async () => {
+      setIsLoading(true);
       try {
         const response = await fetch('/api/dashboards');
         const data = await response.json();
-        setDashboards(data.dashboards || []);
+        const dashboardsWithMeta = (data.dashboards || []).map((dashboard: Dashboard) => ({
+          ...dashboard,
+          widgets_count: Math.floor(Math.random() * 10) + 1, // Mock data
+          description: `Dashboard containing ${Math.floor(Math.random() * 10) + 1} interactive widgets for data visualization`,
+        }));
+        setDashboards(dashboardsWithMeta);
+        setFilteredDashboards(dashboardsWithMeta);
       } catch (error) {
         console.error('Failed to fetch dashboards:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchDashboards();
   }, []);
 
+  useEffect(() => {
+    let filtered = dashboards.filter(dashboard =>
+      dashboard.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    // Sort dashboards
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'name':
+          return a.name.localeCompare(b.name);
+        case 'updated':
+          return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+        case 'created':
+          return new Date(b.created_at || b.updated_at).getTime() - new Date(a.created_at || a.updated_at).getTime();
+        default:
+          return 0;
+      }
+    });
+
+    setFilteredDashboards(filtered);
+  }, [dashboards, searchTerm, sortBy]);
+
   const handleLoadDashboard = (dashboardId: number) => {
     router.push(`/dashboard-preview?dashboardId=${dashboardId}`);
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const getTimeAgo = (dateString: string) => {
+    const now = new Date();
+    const date = new Date(dateString);
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) return 'Just now';
+    if (diffInHours < 24) return `${diffInHours}h ago`;
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays < 30) return `${diffInDays}d ago`;
+    const diffInMonths = Math.floor(diffInDays / 30);
+    return `${diffInMonths}mo ago`;
   };
 
   return (
@@ -232,7 +312,7 @@ const DashboardLoader = () => {
                     className="group relative overflow-hidden transition-all duration-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-cyan-50 dark:hover:from-blue-900/20 dark:hover:to-cyan-900/20 hover:shadow-md data-[active=true]:bg-gradient-to-r data-[active=true]:from-blue-100 data-[active=true]:to-cyan-100 dark:data-[active=true]:from-blue-900/30 dark:data-[active=true]:to-cyan-900/30 data-[active=true]:shadow-sm border-0 data-[active=true]:border data-[active=true]:border-blue-200/50 dark:data-[active=true]:border-blue-700/50"
                   >
                     <LayoutGrid className="w-5 h-5" />
-                    Load Dashboard
+                  Load Dashboard
                     {activeItem === 'dashboard-loader' && (
                       <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 to-cyan-500 rounded-r-full"></div>
                     )}
@@ -267,51 +347,200 @@ const DashboardLoader = () => {
                   style={{ left: 'var(--sidebar-width, 16rem)', width: 'calc(100vw - var(--sidebar-width, 16rem))' }}>
             <div className="flex items-center gap-4">
               <SidebarTrigger className="hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200" />
-              <div className="flex flex-col">
-                <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                  Load Dashboard
-                </h1>
-                <p className="text-sm text-slate-600 dark:text-slate-400">
-                  Choose a dashboard to load and view
-                </p>
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg blur opacity-75"></div>
+                  <div className="relative bg-gradient-to-r from-green-500 to-emerald-500 p-2 rounded-lg">
+                    <Play className="h-5 w-5 text-white" />
+                  </div>
+                </div>
+                <div className="flex flex-col">
+                  <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100 bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                    Dashboard Loader
+                  </h1>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    Browse and load your saved dashboards
+                  </p>
+                </div>
               </div>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200">
+                {filteredDashboards.length} dashboards
+              </Badge>
+              <Link href="/dashboard-generator">
+                <Button size="sm" className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white">
+                  Create New
+                </Button>
+              </Link>
             </div>
           </header>
 
           {/* Main content area with proper top padding to account for fixed header */}
           <main className="flex-1 overflow-auto pt-16">
-            <div className="p-8 bg-gray-50 min-h-screen">
-              {dashboards.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {dashboards.map((dashboard) => (
-                    <Card key={dashboard.id} className="hover:shadow-lg transition-shadow">
-                      <CardHeader>
-                        <CardTitle>{dashboard.name}</CardTitle>
+            <div className="p-8 bg-gradient-to-br from-slate-50 via-white to-green-50/30 min-h-screen">
+              {/* Search and Filter Bar */}
+              <div className="mb-8 p-6 bg-white/70 backdrop-blur-sm rounded-xl border border-slate-200 shadow-lg">
+                <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+                  <div className="flex-1 relative">
+                    <Search className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
+                    <Input
+                      placeholder="Search dashboards..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10 bg-white/50 border-slate-200 focus:border-green-300 transition-all duration-200"
+                    />
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <Filter className="h-4 w-4 text-slate-500" />
+                      <Select value={sortBy} onValueChange={(value) => setSortBy(value as any)}>
+                        <SelectTrigger className="w-[180px] bg-white/50">
+                          <SelectValue placeholder="Sort by..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="updated">Recently Updated</SelectItem>
+                          <SelectItem value="name">Name (A-Z)</SelectItem>
+                          <SelectItem value="created">Recently Created</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Dashboard Grid */}
+              {isLoading ? (
+                <div className="flex items-center justify-center py-20">
+                  <div className="relative">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full blur opacity-20"></div>
+                  </div>
+                </div>
+              ) : filteredDashboards.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {filteredDashboards.map((dashboard) => (
+                    <Card 
+                      key={dashboard.id} 
+                      className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-sm border-0 shadow-lg cursor-pointer overflow-hidden"
+                      onClick={() => handleLoadDashboard(dashboard.id)}
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                      
+                      <CardHeader className="pb-4 relative z-10">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-start gap-3">
+                            <div className="relative">
+                              <div className="absolute inset-0 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg blur opacity-75"></div>
+                              <div className="relative bg-gradient-to-r from-green-500 to-emerald-500 p-2.5 rounded-lg">
+                                <Grid3x3 className="h-5 w-5 text-white" />
+                              </div>
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <CardTitle className="text-lg font-bold text-slate-800 group-hover:text-green-600 transition-colors duration-300 truncate">
+                                {dashboard.name}
+                              </CardTitle>
+                              <p className="text-sm text-slate-500 mt-1 line-clamp-2">
+                                {dashboard.description}
+                              </p>
+                            </div>
+                          </div>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity bg-white/50 hover:bg-white"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  // Add to favorites logic here
+                                }}
+                              >
+                                <Star className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Add to favorites</TooltipContent>
+                          </Tooltip>
+                        </div>
                       </CardHeader>
-                      <CardContent>
-                        <p className="text-sm text-gray-500">
-                          Last updated: {format(new Date(dashboard.updated_at), 'PPP')}
-                        </p>
-                        <Button
-                          onClick={() => handleLoadDashboard(dashboard.id)}
-                          className="mt-4 w-full"
-                        >
-                          Load Dashboard
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center text-gray-500 py-20">
-                  <h3 className="text-2xl font-semibold mb-2">No Dashboards Found</h3>
-                  <p className="mb-4">You haven't saved any dashboards yet.</p>
-                  <Button onClick={() => router.push('/dashboard-generator')}>
-                    Create a New Dashboard
-                  </Button>
-                </div>
-              )}
-            </div>
+                      
+                      <CardContent className="pt-0 relative z-10">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center gap-4">
+                            <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200">
+                              {dashboard.widgets_count} widgets
+                            </Badge>
+                            <div className="flex items-center gap-1 text-xs text-slate-500">
+                              <Clock className="h-3 w-3" />
+                              {getTimeAgo(dashboard.updated_at)}
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center justify-between">
+                          <div className="text-xs text-slate-500">
+                            <Calendar className="h-3 w-3 inline mr-1" />
+                            {formatDate(dashboard.updated_at)}
+                          </div>
+                          
+                          <Button 
+                            size="sm" 
+                            className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0"
+                          >
+                            <Play className="h-3 w-3 mr-1" />
+                            Load
+                            <ArrowRight className="h-3 w-3 ml-1" />
+                          </Button>
+                        </div>
+                        
+                        {/* Preview visualization */}
+                        <div className="mt-4 h-20 bg-gradient-to-r from-green-100 via-emerald-100 to-green-100 rounded-lg flex items-center justify-center opacity-70 group-hover:opacity-100 transition-opacity duration-300">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-6 bg-green-400 rounded-sm animate-pulse"></div>
+                            <div className="w-2 h-8 bg-green-500 rounded-sm animate-pulse" style={{animationDelay: '0.1s'}}></div>
+                            <div className="w-2 h-4 bg-green-400 rounded-sm animate-pulse" style={{animationDelay: '0.2s'}}></div>
+                            <div className="w-2 h-10 bg-green-600 rounded-sm animate-pulse" style={{animationDelay: '0.3s'}}></div>
+                            <div className="w-2 h-6 bg-green-400 rounded-sm animate-pulse" style={{animationDelay: '0.4s'}}></div>
+                          </div>
+                        </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+                <div className="text-center py-20">
+                  <div className="relative mb-6">
+                    <div className="absolute inset-0 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full blur opacity-20"></div>
+                    <div className="relative bg-gradient-to-r from-green-100 to-emerald-100 p-8 rounded-full mx-auto w-fit">
+                      <Folder className="h-16 w-16 text-green-600" />
+                    </div>
+                  </div>
+                  <h3 className="text-2xl font-bold text-slate-700 mb-2">
+                    {searchTerm ? 'No matching dashboards' : 'No dashboards found'}
+                  </h3>
+                  <p className="text-slate-500 max-w-md mx-auto mb-6">
+                    {searchTerm 
+                      ? `No dashboards match "${searchTerm}". Try adjusting your search terms.`
+                      : "You haven't created any dashboards yet. Create your first one to get started with data visualization."
+                    }
+                  </p>
+                  <div className="flex items-center justify-center gap-3">
+                    {searchTerm && (
+                      <Button variant="outline" onClick={() => setSearchTerm('')}>
+                        Clear Search
+                      </Button>
+                    )}
+                    <Link href="/dashboard-generator">
+                      <Button className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white">
+                        <LayoutDashboard className="h-4 w-4 mr-2" />
+                        Create Dashboard
+          </Button>
+                    </Link>
+                  </div>
+        </div>
+      )}
+    </div>
           </main>
         </SidebarInset>
         

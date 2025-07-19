@@ -12,7 +12,7 @@ import 'react-resizable/css/styles.css';
 import { GraphEngine } from '@/components/graph-engine';
 import { DataTable } from '@/components/dashboard/data-table';
 import { processPreviewData } from '@/components/graph-engine/graph-engine-examples';
-import { Pencil, Save } from 'lucide-react';
+import { Pencil, Save, Grid3x3, FolderOpen, Calendar, Star, MoreHorizontal, Trash2, Settings as SettingsIcon, Plus } from 'lucide-react';
 import LoadingOverlay from '@/components/ui/loading-overlay';
 import {
   SidebarProvider,
@@ -47,6 +47,14 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { Badge } from '@/components/ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
 import { AICanvas } from '@/components/ai-canvas';
 import Link from 'next/link';
 
@@ -64,6 +72,8 @@ interface Dashboard {
   name: string;
   layout: any[];
   widgets: Widget[];
+  updated_at?: string;
+  created_at?: string;
 }
 
 const MyDashboardsPage = () => {
@@ -115,6 +125,23 @@ const MyDashboardsPage = () => {
     }
   };
 
+  const handleDeleteDashboard = async (dashboardId: number) => {
+    if (window.confirm('Are you sure you want to delete this dashboard?')) {
+      try {
+        await fetch(`/api/dashboards/${dashboardId}`, {
+          method: 'DELETE',
+        });
+        const updatedDashboards = dashboards.filter(d => d.id !== dashboardId);
+        setDashboards(updatedDashboards);
+        if (selectedDashboard?.id === dashboardId) {
+          setSelectedDashboard(updatedDashboards.length > 0 ? updatedDashboards[0] : null);
+        }
+      } catch (error) {
+        console.error('Failed to delete dashboard:', error);
+      }
+    }
+  };
+
   const renderWidget = (widget: Widget) => {
     let configObject;
     try {
@@ -129,6 +156,16 @@ const MyDashboardsPage = () => {
     if (chartData.renderType === 'chart' && chartData.config) return <GraphEngine config={chartData.config} />;
     if (chartData.renderType === 'table' && chartData.columns && chartData.data) return <DataTable columns={chartData.columns} data={chartData.data} />;
     return null;
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   return (
@@ -326,85 +363,274 @@ const MyDashboardsPage = () => {
                   style={{ left: 'var(--sidebar-width, 16rem)', width: 'calc(100vw - var(--sidebar-width, 16rem))' }}>
             <div className="flex items-center gap-4">
               <SidebarTrigger className="hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200" />
-              <div className="flex flex-col">
-                <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                  My Dashboards
-                </h1>
-                <p className="text-sm text-slate-600 dark:text-slate-400">
-                  View and manage your saved dashboards
-                </p>
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg blur opacity-75"></div>
+                  <div className="relative bg-gradient-to-r from-blue-500 to-purple-500 p-2 rounded-lg">
+                    <FolderOpen className="h-5 w-5 text-white" />
+                  </div>
+                </div>
+                <div className="flex flex-col">
+                  <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                    My Dashboards
+                  </h1>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    Manage and view your saved dashboards
+                  </p>
+                </div>
               </div>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200">
+                {dashboards.length} dashboards
+              </Badge>
+              <Link href="/dashboard-generator">
+                <Button size="sm" className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white">
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Dashboard
+                </Button>
+              </Link>
             </div>
           </header>
 
           {/* Main content area with proper top padding to account for fixed header */}
           <main className="flex-1 overflow-hidden pt-16">
-            <LoadingOverlay isLoading={isLoading} />
-            <div className="flex h-full bg-gray-50">
-              <aside className="w-64 bg-white border-r">
-                <h2 className="text-xl font-bold p-4 border-b">My Dashboards</h2>
-                <nav>
-                  <ul>
-                    {dashboards.map(d => (
-                      <li key={d.id}>
-                        <button
-                          onClick={() => setSelectedDashboard(d)}
-                          className={`w-full text-left p-4 ${selectedDashboard?.id === d.id ? 'bg-gray-200' : 'hover:bg-gray-100'}`}
-                        >
-                          {d.name}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </nav>
-              </aside>
-              <main className="flex-1 p-8 overflow-auto">
-                {selectedDashboard ? (
-                  <>
-                    <div className="flex items-center gap-4 mb-6">
-                      {editingName === selectedDashboard.id ? (
-                        <>
-                          <Input value={newName} onChange={(e) => setNewName(e.target.value)} className="text-3xl font-bold" />
-                          <Button onClick={() => handleNameChange(selectedDashboard.id)}><Save className="h-4 w-4" /></Button>
-                        </>
-                      ) : (
-                        <>
-                          <h1 className="text-3xl font-bold">{selectedDashboard.name}</h1>
-                          <Button variant="ghost" size="icon" onClick={() => { setEditingName(selectedDashboard.id); setNewName(selectedDashboard.name); }}>
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                        </>
-                      )}
+      <LoadingOverlay isLoading={isLoading} />
+            <div className="flex h-full bg-gradient-to-br from-slate-50 via-white to-blue-50/30">
+              {/* Dashboard Sidebar */}
+              <aside className="w-80 bg-white/70 backdrop-blur-sm border-r border-slate-200 shadow-lg">
+                <div className="p-6 bg-gradient-to-br from-blue-50 to-purple-50 border-b border-slate-200">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg blur opacity-75"></div>
+                      <div className="relative bg-gradient-to-r from-blue-500 to-purple-500 p-2 rounded-lg">
+                        <Grid3x3 className="h-5 w-5 text-white" />
+                      </div>
                     </div>
-                    <ResponsiveGridLayout
-                      className="layout"
-                      layouts={{ lg: selectedDashboard.layout }}
-                      isDraggable={false}
-                      isResizable={false}
-                      breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
-                      cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
-                      rowHeight={30}
-                    >
-                      {selectedDashboard.widgets.map(widget => (
-                        <div key={String(widget.id)}>
-                          <Card className="h-full w-full overflow-auto">
-                            <CardHeader>
-                              <CardTitle>{widget.name}</CardTitle>
-                            </CardHeader>
-                            <CardContent>{renderWidget(widget)}</CardContent>
-                          </Card>
-                        </div>
-                      ))}
-                    </ResponsiveGridLayout>
-                  </>
-                ) : (
-                  <div className="text-center text-gray-500 py-20">
-                    <h3 className="text-2xl font-semibold mb-2">No Dashboards Found</h3>
-                    <p>Go to the Dashboard Generator to create your first one.</p>
+                    <div>
+                      <h2 className="text-xl font-bold text-slate-800">Dashboard Library</h2>
+                      <p className="text-sm text-slate-600">Select a dashboard to view</p>
+                    </div>
                   </div>
-                )}
-              </main>
+                </div>
+                
+                <nav className="p-6">
+                  <div className="space-y-3">
+                    {dashboards.length > 0 ? (
+                      dashboards.map(d => (
+                        <div 
+                          key={d.id}
+                          className={`group relative overflow-hidden rounded-lg border transition-all duration-200 cursor-pointer ${
+                            selectedDashboard?.id === d.id 
+                              ? 'bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200 shadow-md' 
+                              : 'bg-white border-slate-200 hover:border-blue-300 hover:shadow-lg'
+                          }`}
+                  onClick={() => setSelectedDashboard(d)}
+                        >
+                          <div className="p-4">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1 min-w-0">
+                                <h3 className={`font-semibold truncate transition-colors duration-200 ${
+                                  selectedDashboard?.id === d.id ? 'text-blue-700' : 'text-slate-800 group-hover:text-blue-600'
+                                }`}>
+                  {d.name}
+                                </h3>
+                                <div className="flex items-center gap-3 mt-2">
+                                  <Badge variant="secondary" className="text-xs bg-slate-100 text-slate-600">
+                                    {d.widgets?.length || 0} widgets
+                                  </Badge>
+                                  {d.updated_at && (
+                                    <div className="flex items-center gap-1 text-xs text-slate-500">
+                                      <Calendar className="h-3 w-3" />
+                                      {formatDate(d.updated_at)}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => { setEditingName(d.id); setNewName(d.name); }}>
+                                    <Pencil className="mr-2 h-4 w-4" />
+                                    Rename
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => setSelectedDashboard(d)}>
+                                    <SettingsIcon className="mr-2 h-4 w-4" />
+                                    Configure
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem 
+                                    onClick={() => handleDeleteDashboard(d.id)}
+                                    className="text-red-600 focus:text-red-600"
+                                  >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          </div>
+                          
+                          {selectedDashboard?.id === d.id && (
+                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 to-purple-500"></div>
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-12">
+                        <div className="relative mb-6">
+                          <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full blur opacity-20"></div>
+                          <div className="relative bg-gradient-to-r from-blue-100 to-purple-100 p-8 rounded-full mx-auto w-fit">
+                            <FolderOpen className="h-12 w-12 text-blue-600" />
+                          </div>
+                        </div>
+                        <h3 className="text-lg font-semibold text-slate-700 mb-2">No Dashboards Yet</h3>
+                        <p className="text-slate-500 mb-6">Create your first dashboard to get started</p>
+                        <Link href="/dashboard-generator">
+                          <Button className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white">
+                            <Plus className="h-4 w-4 mr-2" />
+                            Create Dashboard
+                          </Button>
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+        </nav>
+      </aside>
+
+              {/* Dashboard Content */}
+              <main className="flex-1 overflow-auto">
+        {selectedDashboard ? (
+                  <div className="p-8">
+                    {/* Dashboard Header */}
+                    <div className="mb-8 p-6 bg-white/70 backdrop-blur-sm rounded-xl border border-slate-200 shadow-lg">
+                      <div className="flex items-center justify-between">
+              {editingName === selectedDashboard.id ? (
+                          <div className="flex items-center gap-4 flex-1">
+                            <Input 
+                              value={newName} 
+                              onChange={(e) => setNewName(e.target.value)} 
+                              className="text-2xl font-bold bg-white/50 border-slate-300 focus:border-blue-300"
+                            />
+                            <div className="flex gap-2">
+                              <Button onClick={() => handleNameChange(selectedDashboard.id)} size="sm">
+                                <Save className="h-4 w-4" />
+                              </Button>
+                              <Button variant="outline" onClick={() => setEditingName(null)} size="sm">
+                                Cancel
+                              </Button>
+                            </div>
+                          </div>
+              ) : (
+                <>
+                            <div className="flex items-center gap-4">
+                              <div className="relative">
+                                <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg blur opacity-75"></div>
+                                <div className="relative bg-gradient-to-r from-blue-500 to-purple-500 p-3 rounded-lg">
+                                  <Grid3x3 className="h-6 w-6 text-white" />
+                                </div>
+                              </div>
+                              <div>
+                                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                                  {selectedDashboard.name}
+                                </h1>
+                                <div className="flex items-center gap-4 mt-2">
+                                  <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200">
+                                    {selectedDashboard.widgets?.length || 0} widgets
+                                  </Badge>
+                                  {selectedDashboard.updated_at && (
+                                    <div className="flex items-center gap-2 text-sm text-slate-600">
+                                      <Calendar className="h-4 w-4" />
+                                      Last updated {formatDate(selectedDashboard.updated_at)}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => { setEditingName(selectedDashboard.id); setNewName(selectedDashboard.name); }}
+                              className="bg-white/50 hover:bg-white"
+                            >
+                              <Pencil className="h-4 w-4 mr-2" />
+                              Rename
+                  </Button>
+                </>
+              )}
             </div>
+                    </div>
+
+                    {/* Dashboard Grid */}
+                    {selectedDashboard.widgets && selectedDashboard.widgets.length > 0 ? (
+            <ResponsiveGridLayout
+              className="layout"
+              layouts={{ lg: selectedDashboard.layout }}
+              isDraggable={false}
+              isResizable={false}
+              breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
+              cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
+              rowHeight={30}
+            >
+              {selectedDashboard.widgets.map(widget => (
+                <div key={String(widget.id)}>
+                            <Card className="h-full w-full overflow-auto shadow-xl border-0 bg-white/80 backdrop-blur-sm hover:shadow-2xl transition-shadow duration-300">
+                              <CardHeader className="bg-gradient-to-br from-slate-50 to-white border-b">
+                                <CardTitle className="flex items-center gap-2 text-slate-800">
+                                  <div className="w-3 h-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
+                                  {widget.name}
+                                </CardTitle>
+                    </CardHeader>
+                              <CardContent className="p-6">
+                                {renderWidget(widget)}
+                              </CardContent>
+                  </Card>
+                </div>
+              ))}
+            </ResponsiveGridLayout>
+                    ) : (
+                      <div className="text-center py-20">
+                        <div className="relative mb-6">
+                          <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full blur opacity-20"></div>
+                          <div className="relative bg-gradient-to-r from-blue-100 to-purple-100 p-8 rounded-full mx-auto w-fit">
+                            <Grid3x3 className="h-16 w-16 text-blue-600" />
+                          </div>
+                        </div>
+                        <h3 className="text-2xl font-bold text-slate-700 mb-2">Empty Dashboard</h3>
+                        <p className="text-slate-500 max-w-md mx-auto mb-6">
+                          This dashboard doesn't have any widgets yet. Add some widgets to start visualizing your data.
+                        </p>
+                        <Link href="/dashboard-generator">
+                          <Button className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white">
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Widgets
+                          </Button>
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="text-center">
+                      <div className="relative mb-6">
+                        <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full blur opacity-20"></div>
+                        <div className="relative bg-gradient-to-r from-blue-100 to-purple-100 p-8 rounded-full mx-auto w-fit">
+                          <FolderOpen className="h-16 w-16 text-blue-600" />
+                        </div>
+                      </div>
+                      <h3 className="text-2xl font-bold text-slate-700 mb-2">Select a Dashboard</h3>
+                      <p className="text-slate-500">Choose a dashboard from the sidebar to view its contents</p>
+                    </div>
+          </div>
+        )}
+      </main>
+    </div>
           </main>
         </SidebarInset>
         

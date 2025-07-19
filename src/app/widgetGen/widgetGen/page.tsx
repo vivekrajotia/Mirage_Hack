@@ -27,11 +27,14 @@ import {
   CircleHelp,
   TrendingUp,
   LayoutGrid,
+  Wrench,
+  Cpu,
 } from 'lucide-react';
 import Link from 'next/link';
 import * as React from 'react';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { AICanvas } from '@/components/ai-canvas';
+import { Badge } from '@/components/ui/badge';
 
 export default function Page() {
   const [isAICanvasOpen, setIsAICanvasOpen] = React.useState(false);
@@ -39,9 +42,9 @@ export default function Page() {
 
   return (
     <TooltipProvider>
-      <SidebarProvider>
-        <Sidebar className="border-r-0 shadow-lg sidebar-enhanced">
-          <SidebarHeader className="bg-gradient-to-b from-slate-50 to-white dark:from-slate-900 dark:to-slate-800 p-6 sidebar-header-enhanced">
+    <SidebarProvider>
+      <Sidebar className="border-r-0 shadow-lg sidebar-enhanced">
+        <SidebarHeader className="bg-gradient-to-b from-slate-50 to-white dark:from-slate-900 dark:to-slate-800 p-6 sidebar-header-enhanced">
             <div className="flex h-12 items-center gap-3">
               <div className="relative logo-container-enhanced">
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg blur opacity-75"></div>
@@ -58,18 +61,18 @@ export default function Page() {
                 </span>
               </div>
             </div>
-          </SidebarHeader>
-          
-          <SidebarContent className="overflow-hidden flex flex-col">
-            <SidebarGroup className="px-3 py-2">
-              <SidebarGroupLabel className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 group-label-enhanced">
-                Main Navigation
-              </SidebarGroupLabel>
-              <SidebarMenu className="space-y-1">
-                <SidebarMenuItem>
-                  <Link href="/">
-                    <SidebarMenuButton 
-                      isActive={activeItem === 'dashboard'}
+        </SidebarHeader>
+        
+        <SidebarContent className="overflow-hidden flex flex-col">
+          <SidebarGroup className="px-3 py-2">
+            <SidebarGroupLabel className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 group-label-enhanced">
+              Main Navigation
+            </SidebarGroupLabel>
+            <SidebarMenu className="space-y-1">
+              <SidebarMenuItem>
+                <Link href="/">
+                  <SidebarMenuButton 
+                    isActive={activeItem === 'dashboard'}
                       tooltip="Dashboard Overview"
                       className="group relative overflow-hidden transition-all duration-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-cyan-50 dark:hover:from-blue-900/20 dark:hover:to-cyan-900/20 hover:shadow-md data-[active=true]:bg-gradient-to-r data-[active=true]:from-blue-100 data-[active=true]:to-cyan-100 dark:data-[active=true]:from-blue-900/30 dark:data-[active=true]:to-cyan-900/30 data-[active=true]:shadow-sm border-0 data-[active=true]:border data-[active=true]:border-blue-200/50 dark:data-[active=true]:border-blue-700/50"
                     >
@@ -78,17 +81,17 @@ export default function Page() {
                           <LayoutDashboard className="h-5 w-5 transition-colors group-hover:text-blue-600 dark:group-hover:text-blue-400" />
                         </div>
                         <span className="font-medium group-hover:text-blue-700 dark:group-hover:text-blue-300">
-                          Dashboard
+                    Dashboard
                         </span>
                       </div>
-                    </SidebarMenuButton>
-                  </Link>
-                </SidebarMenuItem>
+                  </SidebarMenuButton>
+                </Link>
+              </SidebarMenuItem>
 
-                <SidebarMenuItem>
-                  <SidebarMenuButton 
+              <SidebarMenuItem>
+                <SidebarMenuButton 
                     tooltip="AI Canvas - Intelligent Data Analysis"
-                    onClick={() => setIsAICanvasOpen(true)}
+                  onClick={() => setIsAICanvasOpen(true)}
                     className="group relative overflow-hidden ai-canvas-button text-white border-0 w-full h-12 bg-gradient-to-r from-blue-500 via-purple-500 to-cyan-500 hover:from-blue-600 hover:via-purple-600 hover:to-cyan-600 transition-all duration-300 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]"
                   >
                     <div className="flex items-center gap-3 relative z-10 w-full">
@@ -103,10 +106,10 @@ export default function Page() {
                       </div>
                     </div>
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
 
-                <SidebarSeparator className="my-2" />
+              <SidebarSeparator className="my-2" />
 
                 <SidebarMenuItem>
                   <Link href="/">
@@ -175,7 +178,7 @@ export default function Page() {
                     </SidebarMenuButton>
                   </Link>
                 </SidebarMenuItem>
-                <SidebarMenuItem>
+              <SidebarMenuItem>
                   <SidebarMenuButton 
                     isActive={activeItem === 'widgetGen'}
                     className="group relative overflow-hidden transition-all duration-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-cyan-50 dark:hover:from-blue-900/20 dark:hover:to-cyan-900/20 hover:shadow-md data-[active=true]:bg-gradient-to-r data-[active=true]:from-blue-100 data-[active=true]:to-cyan-100 dark:data-[active=true]:from-blue-900/30 dark:data-[active=true]:to-cyan-900/30 data-[active=true]:shadow-sm border-0 data-[active=true]:border data-[active=true]:border-blue-200/50 dark:data-[active=true]:border-blue-700/50"
@@ -208,11 +211,11 @@ export default function Page() {
                     <SidebarMenuButton>
                       <LayoutDashboard className="w-5 h-5" />
                       My Dashboards
-                    </SidebarMenuButton>
-                  </Link>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroup>
+                  </SidebarMenuButton>
+                </Link>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroup>
 
             {/* Status indicator at bottom */}
             <div className="mt-auto mb-4 mx-3 p-3 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg border border-green-200/50 dark:border-green-700/50 status-indicator-enhanced">
@@ -223,28 +226,92 @@ export default function Page() {
                 </span>
               </div>
             </div>
-          </SidebarContent>
-        </Sidebar>
-        
-        <SidebarInset className="bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-800">
-          <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-6 shadow-sm">
-            <div className="flex items-center gap-4">
-              <SidebarTrigger className="hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200" />
-              <h1 className="text-lg font-semibold">Widget Generator</h1>
+        </SidebarContent>
+      </Sidebar>
+      
+        <SidebarInset className="bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-800 flex flex-col h-screen">
+          <header className="fixed top-0 right-0 z-50 flex h-16 items-center justify-between border-b bg-white/95 dark:bg-slate-900/95 backdrop-blur-lg px-6 shadow-lg" 
+                  style={{ left: 'var(--sidebar-width, 16rem)', width: 'calc(100vw - var(--sidebar-width, 16rem))' }}>
+          <div className="flex items-center gap-4">
+            <SidebarTrigger className="hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200" />
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg blur opacity-75"></div>
+                  <div className="relative bg-gradient-to-r from-indigo-500 to-purple-500 p-2 rounded-lg">
+                    <Cpu className="h-5 w-5 text-white" />
+                  </div>
+                </div>
+                <div className="flex flex-col">
+                  <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                    Widget Generator
+                  </h1>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    Build custom widgets for your dashboards
+                  </p>
+                </div>
+              </div>
             </div>
-          </header>
+            
+            <div className="flex items-center gap-3">
+              <Badge variant="secondary" className="bg-indigo-50 text-indigo-700 border-indigo-200">
+                <Wrench className="h-3 w-3 mr-1" />
+                Tools
+              </Badge>
+          </div>
+        </header>
 
-          <main className="flex-1 overflow-auto">
-            <WidgetGenerator />
-          </main>
-        </SidebarInset>
+          <main className="flex-1 overflow-auto pt-16 bg-gradient-to-br from-slate-50 via-white to-indigo-50/30">
+            <div className="p-8">
+              {/* Enhanced Widget Generator Container */}
+              <div className="bg-white/70 backdrop-blur-sm rounded-xl border border-slate-200 shadow-xl overflow-hidden">
+                <div className="bg-gradient-to-br from-indigo-50 via-white to-purple-50 p-6 border-b border-slate-200">
+                  <div className="flex items-center gap-4">
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg blur opacity-75"></div>
+                      <div className="relative bg-gradient-to-r from-indigo-500 to-purple-500 p-3 rounded-lg">
+                        <Wrench className="h-6 w-6 text-white" />
+                      </div>
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                        Widget Builder
+                      </h2>
+                      <p className="text-slate-600 mt-1">
+                        Create interactive widgets with advanced visualization capabilities
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-4 mt-4 p-3 bg-white/50 rounded-lg border border-indigo-200">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                      <span className="text-sm font-medium text-slate-700">Live Preview</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Cpu className="h-4 w-4 text-indigo-500" />
+                      <span className="text-sm font-medium text-slate-700">Smart Configuration</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-purple-500" />
+                      <span className="text-sm font-medium text-slate-700">AI Assisted</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="p-6">
+          <WidgetGenerator />
+                </div>
+              </div>
+            </div>
+        </main>
+      </SidebarInset>
         
         {/* AI Canvas Modal */}
         <AICanvas 
           isOpen={isAICanvasOpen} 
           onClose={() => setIsAICanvasOpen(false)} 
         />
-      </SidebarProvider>
+    </SidebarProvider>
     </TooltipProvider>
   );
 } 
