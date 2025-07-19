@@ -170,11 +170,16 @@ const DashboardGenerator = () => {
   };
   
   const handleSaveDashboard = async () => {
-    console.log('Saving dashboard:', {
-      name: dashboardName,
-      widgetIds: widgets.selected.map(w => w.id),
-    });
-    alert('Dashboard saved! (Check console for output)');
+    try {
+      console.log('Saving dashboard:', {
+        name: dashboardName,
+        widgetIds: widgets.selected.map(w => w.id),
+      });
+      setBanner({ type: 'success', message: 'Dashboard saved! (Check console for output)' });
+    } catch (error) {
+      console.error('Error saving dashboard:', error);
+      setBanner({ type: 'error', message: 'Failed to save dashboard' });
+    }
   };
 
   const handlePreview = () => {
