@@ -7,7 +7,7 @@ import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
-import { Alert, AlertDescription } from './ui/alert';
+import ToastBanner from './toast-banner';
 import { ScrollArea } from './ui/scroll-area';
 import { Separator } from './ui/separator';
 import { useAIInsights } from '@/hooks/use-ai-insights';
@@ -273,15 +273,7 @@ export const AIInsightsButton: React.FC<AIInsightsButtonProps> = ({
               )}
 
               {error && (
-                <Alert className="mb-4">
-                  <AlertDescription className="flex items-center justify-between">
-                    <span>{error}</span>
-                    <Button onClick={retryGeneration} variant="outline" size="sm">
-                      <RefreshCw className="h-4 w-4 mr-2" />
-                      Retry
-                    </Button>
-                  </AlertDescription>
-                </Alert>
+                <ToastBanner type="error" message={error} onClose={retryGeneration} />
               )}
 
               {insights && (
