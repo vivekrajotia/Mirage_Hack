@@ -9,15 +9,22 @@ const AppWrapper: React.FC<{ eodDates: string[] }> = ({ eodDates }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 3000);
+    const hasLoadedBefore = sessionStorage.getItem('hasLoadedBefore');
 
-    return () => clearTimeout(timer);
+    if (hasLoadedBefore) {
+      setIsLoading(false);
+    } else {
+      const timer = setTimeout(() => {
+        setIsLoading(false);
+        sessionStorage.setItem('hasLoadedBefore', 'true');
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
   }, []);
 
   const handleLoadingComplete = () => {
     setIsLoading(false);
+    sessionStorage.setItem('hasLoadedBefore', 'true');
   };
 
   if (isLoading) {
