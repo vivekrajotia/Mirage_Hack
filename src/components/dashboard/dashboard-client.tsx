@@ -48,7 +48,7 @@ import { DataVisualizationPanel } from './data-visualization-panel';
 import { applyFilters, getFilterSummary } from '@/lib/filter-utils';
 import AIInsightsOverlay from '../ai-insights-overlay';
 import { Widget, WidgetLayout, WidgetManager, DEFAULT_WIDGETS } from '@/lib/widget-config';
-import { MetricWidget, ChartWidget, WidgetSettings } from './widgets';
+import { MetricWidget, ChartWidget, WidgetSettings, SimpleResizableGrid } from './widgets';
 import rawTrades from '@/app/xceler_eodservice_publisheddata (1).json';
 
 // Map raw data to Trade interface
@@ -522,7 +522,7 @@ export const DashboardClient = React.forwardRef<DashboardClientHandle, {}>((prop
             </CollapsibleTrigger>
           </div>
           <CollapsibleContent className="space-y-4">
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <SimpleResizableGrid className="h-auto">
               {visibleMetricWidgets.map((widget) => {
                 let value: string | number = '';
                 let subtitle = '';
@@ -564,7 +564,7 @@ export const DashboardClient = React.forwardRef<DashboardClientHandle, {}>((prop
                   />
                 );
               })}
-            </div>
+            </SimpleResizableGrid>
           </CollapsibleContent>
         </Collapsible>
       )}
@@ -591,7 +591,7 @@ export const DashboardClient = React.forwardRef<DashboardClientHandle, {}>((prop
             </CollapsibleTrigger>
           </div>
           <CollapsibleContent className="space-y-4">
-            <div className="grid gap-6 lg:grid-cols-2">
+            <SimpleResizableGrid className="h-auto">
               {visibleChartWidgets.map((widget) => {
                 let chartContent: React.ReactNode = null;
                 
@@ -901,7 +901,7 @@ export const DashboardClient = React.forwardRef<DashboardClientHandle, {}>((prop
                   </ChartWidget>
                 );
               })}
-            </div>
+            </SimpleResizableGrid>
           </CollapsibleContent>
         </Collapsible>
       )}
