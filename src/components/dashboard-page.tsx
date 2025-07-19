@@ -38,6 +38,8 @@ import {
   Settings2,
   Mail,
   Loader2,
+  MessageSquareText,
+  LayoutGrid,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -58,8 +60,13 @@ import { Badge } from '@/components/ui/badge';
 import { DashboardClient } from '@/components/dashboard/dashboard-client';
 import { AICanvas } from '@/components/ai-canvas';
 import ReportsPage from '@/components/reports-page';
+import Link from 'next/link';
 
-const DashboardPage: React.FC = () => {
+interface DashboardPageProps {
+  eodDates: string[];
+}
+
+const DashboardPage: React.FC<DashboardPageProps> = ({ eodDates }) => {
   const [isAICanvasOpen, setIsAICanvasOpen] = React.useState(false);
   const [activeItem, setActiveItem] = React.useState('dashboard');
   const [dashboardRef, setDashboardRef] = React.useState<any>(null);
@@ -226,6 +233,38 @@ const DashboardPage: React.FC = () => {
                     </div>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <Link href="/widgetGen/widgetGen">
+                    <SidebarMenuButton>
+                      <Settings className="w-5 h-5" />
+                      Widget Gen
+                    </SidebarMenuButton>
+                  </Link>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <Link href="/dashboard-generator">
+                    <SidebarMenuButton>
+                      <LayoutDashboard className="w-5 h-5" />
+                      Dashboard Gen
+                    </SidebarMenuButton>
+                  </Link>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <Link href="/dashboard-loader">
+                    <SidebarMenuButton>
+                      <LayoutGrid className="w-5 h-5" />
+                      Load Dashboard
+                    </SidebarMenuButton>
+                  </Link>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <Link href="/my-dashboards">
+                    <SidebarMenuButton>
+                      <LayoutDashboard className="w-5 h-5" />
+                      My Dashboards
+                    </SidebarMenuButton>
+                  </Link>
+                </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroup>
 
@@ -368,7 +407,7 @@ const DashboardPage: React.FC = () => {
               <ReportsPage />
             ) : (
               <div className="p-6">
-                <DashboardClient ref={setDashboardRef} />
+                <DashboardClient ref={setDashboardRef} eodDates={eodDates} />
               </div>
             )}
           </main>
