@@ -179,24 +179,7 @@ const getChartInfo = (widgetType: string) => {
         "Prioritize cost reduction initiatives by impact"
       ]
     },
-    'trade-flow-sankey': {
-      description: "Sankey diagram showing trade flow patterns between counterparties, commodities, and regions. Visualizes trading relationship networks.",
-      dataSource: "Trade flow data mapping counterparty relationships and volumes",
-      insights: [
-        "Understand trading relationship dependencies",
-        "Identify key intermediaries in your trading network",
-        "Spot concentration risks in trading partnerships"
-      ]
-    },
-    'commodity-correlation': {
-      description: "Correlation matrix heatmap showing price correlations between different commodities. Helps with portfolio diversification and hedging strategies.",
-      dataSource: "Price data correlation analysis across commodity pairs",
-      insights: [
-        "Identify highly correlated commodity pairs for risk management",
-        "Find diversification opportunities in uncorrelated assets",
-        "Optimize hedging strategies based on correlation patterns"
-      ]
-    },
+
     'geographic-risk': {
       description: "Geographic visualization showing risk distribution across different regions and profit centers with interactive map interface.",
       dataSource: "Regional risk data aggregated by geographic profit centers",
@@ -215,42 +198,8 @@ const getChartInfo = (widgetType: string) => {
         "Optimize operational efficiency in trade processing"
       ]
     },
-    'volatility-gauge': {
-      description: "Multiple gauge displays showing real-time volatility metrics for different portfolios and asset classes with alert thresholds.",
-      dataSource: "Volatility calculations based on price movements and position data",
-      insights: [
-        "Monitor portfolio volatility against risk thresholds",
-        "Quick visual assessment of multiple volatility metrics",
-        "Early warning system for excessive volatility"
-      ]
-    },
-    'portfolio-treemap': {
-      description: "Hierarchical treemap visualization showing portfolio composition by commodity, counterparty, and position size with color-coded performance.",
-      dataSource: "Portfolio composition data with hierarchical breakdown",
-      insights: [
-        "Understand portfolio structure at multiple levels",
-        "Identify concentration risks in specific assets",
-        "Visualize performance patterns across portfolio segments"
-      ]
-    },
-    'cashflow-waterfall': {
-      description: "Waterfall analysis showing cash flow contributions from different sources - trades, costs, settlements, and adjustments over time.",
-      dataSource: "Cash flow data categorized by source and time period",
-      insights: [
-        "Track cash generation from different business activities",
-        "Identify cash flow timing patterns and seasonality",
-        "Optimize working capital management strategies"
-      ]
-    },
-    'counterparty-network': {
-      description: "Network graph showing counterparty relationships with interactive nodes representing entities and edges showing trade volumes and frequencies.",
-      dataSource: "Counterparty relationship data with trade volume and frequency metrics",
-      insights: [
-        "Visualize counterparty ecosystem and dependencies",
-        "Identify key counterparties for relationship management",
-        "Assess counterparty concentration risk through network analysis"
-      ]
-    }
+
+
   };
 
   return chartInfoMap[widgetType];
@@ -1191,7 +1140,7 @@ export const DashboardClient = React.forwardRef<DashboardClientHandle, {}>((prop
                               .tooltip('axis')
                               .legend(false)
                               .background('#ffffff')
-                              .dimensions('100%', '300px')
+                              .dimensions('100%', '260px')
                               .addBarSeries({
                                 name: 'Total PnL (M)',
                                 data: sortedTraders.map(([, data], idx) => ({
@@ -1236,7 +1185,7 @@ export const DashboardClient = React.forwardRef<DashboardClientHandle, {}>((prop
                               .tooltip('axis')
                               .legend(true, 'top')
                               .background('#ffffff')
-                              .dimensions('100%', '300px')
+                              .dimensions('100%', '260px')
                               .addBarSeries({
                                 name: 'FX Exposure',
                                 data: exposureData,
@@ -1282,7 +1231,7 @@ export const DashboardClient = React.forwardRef<DashboardClientHandle, {}>((prop
                               .tooltip('axis')
                               .legend(false)
                               .background('#ffffff')
-                              .dimensions('100%', '300px')
+                              .dimensions('100%', '260px')
                               .addBarSeries({
                                 name: 'Cost Components',
                                 data: waterfallData
@@ -1294,287 +1243,7 @@ export const DashboardClient = React.forwardRef<DashboardClientHandle, {}>((prop
                     );
                     break;
 
-                  case 'commodity-correlation':
-                    chartContent = (
-                      <div className="h-[300px]">
-                        <GraphEngine
-                          config={(() => {
-                            const commodities = [...new Set(filteredTrades.map(t => t.commodity || 'Unknown'))];
-                            const correlationMatrix: number[][] = [];
-                            
-                            // Create mock correlation data for visualization
-                            commodities.forEach((_, i) => {
-                              const row: number[] = [];
-                              commodities.forEach((_, j) => {
-                                if (i === j) row.push(1.0);
-                                else {
-                                  // Generate realistic correlation between -0.8 and 0.8
-                                  const correlation = (Math.random() - 0.5) * 1.6;
-                                  row.push(Math.round(correlation * 100) / 100);
-                                }
-                              });
-                              correlationMatrix.push(row);
-                            });
-
-                            const heatmapData = correlationMatrix.flatMap((row, i) =>
-                              row.map((value, j) => [i, j, value])
-                            );
-
-                            return {
-                              tooltip: {
-                                position: 'top',
-                                formatter: (params: any) => {
-                                  return `${commodities[params.data[0]]} vs ${commodities[params.data[1]]}<br/>Correlation: ${params.data[2]}`
-                                }
-                              },
-                              grid: { height: '60%', top: '10%' },
-                              xAxis: { type: 'category', data: commodities, splitArea: { show: true } },
-                              yAxis: { type: 'category', data: commodities, splitArea: { show: true } },
-                              visualMap: {
-                                min: -1,
-                                max: 1,
-                                calculable: true,
-                                orient: 'horizontal',
-                                left: 'center',
-                                bottom: '15%',
-                                inRange: { color: ['#313695', '#4575b4', '#74add1', '#abd9e9', '#e0f3f8', '#ffffbf', '#fee090', '#fdae61', '#f46d43', '#d73027', '#a50026'] }
-                              },
-                              series: [{
-                                name: 'Correlation',
-                                type: 'heatmap',
-                                data: heatmapData,
-                                label: { show: true, fontSize: 10 },
-                                emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0, 0, 0, 0.5)' } }
-                              }],
-                              backgroundColor: '#ffffff'
-                            };
-                          })()}
-                        />
-                      </div>
-                    );
-                    break;
-
-                  case 'portfolio-treemap':
-                    chartContent = (
-                      <div className="h-[300px]">
-                        <GraphEngine
-                          config={(() => {
-                            const portfolioData = filteredTrades.reduce((acc, trade) => {
-                              const commodity = trade.commodity || 'Unknown';
-                              const counterparty = trade.counterparty || 'Unknown';
-                              
-                              if (!acc[commodity]) acc[commodity] = { value: 0, children: {} };
-                              if (!acc[commodity].children[counterparty]) {
-                                acc[commodity].children[counterparty] = { value: 0 };
-                              }
-                              
-                              const tradeValue = Math.abs(trade.trade_value || 0);
-                              acc[commodity].value += tradeValue;
-                              acc[commodity].children[counterparty].value += tradeValue;
-                              return acc;
-                            }, {} as any);
-
-                            const treemapData = Object.entries(portfolioData).map(([name, data]: [string, any]) => ({
-                              name,
-                              value: data.value / 1000000,
-                              children: Object.entries(data.children).map(([childName, childData]: [string, any]) => ({
-                                name: childName,
-                                value: childData.value / 1000000
-                              }))
-                            }));
-
-                            return {
-                              tooltip: { trigger: 'item', formatter: '{b}: {c}M' },
-                              series: [{
-                                name: 'Portfolio',
-                                type: 'treemap',
-                                width: '100%',
-                                height: '300px',
-                                roam: false,
-                                nodeClick: false,
-                                data: treemapData,
-                                breadcrumb: { show: false },
-                                label: { show: true, position: 'inside', fontSize: 12 },
-                                itemStyle: {
-                                  borderColor: '#fff',
-                                  borderWidth: 2,
-                                  gapWidth: 2
-                                },
-                                levels: [{
-                                  itemStyle: {
-                                    borderColor: '#333',
-                                    borderWidth: 3,
-                                    gapWidth: 3
-                                  }
-                                }]
-                              }],
-                              backgroundColor: '#ffffff'
-                            };
-                          })()}
-                        />
-                      </div>
-                    );
-                    break;
-
-                  case 'volatility-gauge':
-                    chartContent = (
-                      <div className="h-[300px] grid grid-cols-2 gap-4">
-                        {['PnL Volatility', 'Price Volatility', 'Volume Volatility', 'Risk Volatility'].map((metric, idx) => {
-                          const gaugeValue = Math.random() * 100; // Mock volatility data
-                          return (
-                            <div key={metric} className="h-[130px]">
-                              <GraphEngine
-                                config={{
-                                  series: [{
-                                    name: metric,
-                                    type: 'gauge',
-                                    progress: { show: true, width: 8 },
-                                    axisLine: { lineStyle: { width: 8 } },
-                                    axisTick: { show: false },
-                                    splitLine: { length: 15, lineStyle: { width: 2, color: '#999' } },
-                                    axisLabel: { distance: 25, color: '#999', fontSize: 10 },
-                                    anchor: { show: true, showAbove: true, size: 25 },
-                                    title: { show: true, fontSize: 12 },
-                                    detail: { valueAnimation: true, fontSize: 16, offsetCenter: [0, '70%'] },
-                                    data: [{ value: gaugeValue, name: metric }]
-                                  }],
-                                  backgroundColor: '#ffffff'
-                                }}
-                              />
-                            </div>
-                          );
-                        })}
-                      </div>
-                    );
-                    break;
-
-                                    case 'counterparty-network':
-                    chartContent = (
-                      <div className="h-[300px]">
-                        <GraphEngine
-                          config={(() => {
-                            const networkData = filteredTrades.reduce((acc, trade) => {
-                              const counterparty = trade.counterparty || 'Unknown';
-                              const commodity = trade.commodity || 'Unknown';
-                              
-                              if (!acc.nodes.find((n: any) => n.id === counterparty)) {
-                                acc.nodes.push({
-                                  id: counterparty,
-                                  name: counterparty,
-                                  category: 0,
-                                  value: 0,
-                                  symbolSize: 30
-                                });
-                              }
-                              
-                              if (!acc.nodes.find((n: any) => n.id === commodity)) {
-                                acc.nodes.push({
-                                  id: commodity,
-                                  name: commodity,
-                                  category: 1,
-                                  value: 0,
-                                  symbolSize: 20
-                                });
-                              }
-                              
-                              const existingLink = acc.links.find((l: any) => 
-                                (l.source === counterparty && l.target === commodity) ||
-                                (l.source === commodity && l.target === counterparty)
-                              );
-                              
-                              if (existingLink) {
-                                existingLink.value += Math.abs(trade.trade_value || 0);
-                              } else {
-                                acc.links.push({
-                                  source: counterparty,
-                                  target: commodity,
-                                  value: Math.abs(trade.trade_value || 0)
-                                });
-                              }
-                              
-                              return acc;
-                            }, { nodes: [], links: [] } as any);
-
-                            return {
-                              tooltip: { trigger: 'item' },
-                              legend: {
-                                data: ['Counterparty', 'Commodity'],
-                                bottom: 10
-                              },
-                              series: [{
-                                name: 'Trading Network',
-                                type: 'graph',
-                                layout: 'force',
-                                data: networkData.nodes,
-                                links: networkData.links,
-                                categories: [
-                                  { name: 'Counterparty', itemStyle: { color: '#4ECDC4' } },
-                                  { name: 'Commodity', itemStyle: { color: '#FF6B6B' } }
-                                ],
-                                roam: true,
-                                focusNodeAdjacency: true,
-                                itemStyle: { borderColor: '#fff', borderWidth: 1 },
-                                lineStyle: { color: 'source', curveness: 0.1, width: 2 },
-                                emphasis: { focus: 'adjacency' },
-                                force: {
-                                  repulsion: 100,
-                                  gravity: 0.1,
-                                  edgeLength: 150,
-                                  layoutAnimation: true
-                                }
-                              }],
-                              backgroundColor: '#ffffff'
-                            };
-                          })()}
-                        />
-                      </div>
-                    );
-                    break;
-
-                  case 'trade-flow-sankey':
-                    chartContent = (
-                      <div className="h-[300px]">
-                        <GraphEngine
-                          config={(() => {
-                            const sankeyData = filteredTrades.reduce((acc, trade) => {
-                              const source = trade.trader_name || 'Unknown Trader';
-                              const target = trade.counterparty || 'Unknown Counterparty';
-                              const value = Math.abs(trade.trade_value || 0) / 1000000;
-                              
-                              if (!acc.nodes.find((n: any) => n.name === source)) {
-                                acc.nodes.push({ name: source });
-                              }
-                              if (!acc.nodes.find((n: any) => n.name === target)) {
-                                acc.nodes.push({ name: target });
-                              }
-                              
-                              const existingLink = acc.links.find((l: any) => l.source === source && l.target === target);
-                              if (existingLink) {
-                                existingLink.value += value;
-                              } else {
-                                acc.links.push({ source, target, value });
-                              }
-                              
-                              return acc;
-                            }, { nodes: [], links: [] } as any);
-
-                            return {
-                              tooltip: { trigger: 'item', triggerOn: 'mousemove' },
-                              series: [{
-                                type: 'sankey',
-                                data: sankeyData.nodes,
-                                links: sankeyData.links,
-                                emphasis: { focus: 'adjacency' },
-                                itemStyle: { borderWidth: 1, borderColor: '#aaa' },
-                                lineStyle: { color: 'gradient', curveness: 0.5 }
-                              }],
-                              backgroundColor: '#ffffff'
-                            };
-                          })()}
-                        />
-                      </div>
-                    );
-                    break;
+                  
 
                   case 'geographic-risk':
                     chartContent = (
@@ -1606,7 +1275,7 @@ export const DashboardClient = React.forwardRef<DashboardClientHandle, {}>((prop
                               .tooltip('axis')
                               .legend(false)
                               .background('#ffffff')
-                              .dimensions('100%', '300px')
+                              .dimensions('100%', '260px')
                               .addBarSeries({
                                 name: 'Geographic Risk',
                                 data: geoData.map((d, idx) => ({
@@ -1654,7 +1323,7 @@ export const DashboardClient = React.forwardRef<DashboardClientHandle, {}>((prop
                               .tooltip('axis')
                               .legend(false)
                               .background('#ffffff')
-                              .dimensions('100%', '300px')
+                              .dimensions('100%', '260px')
                               .addLineSeries({
                                 name: 'Lifecycle Progress',
                                 data: timelineData.map(d => d.value),
@@ -1695,7 +1364,7 @@ export const DashboardClient = React.forwardRef<DashboardClientHandle, {}>((prop
                               .tooltip('axis')
                               .legend(false)
                               .background('#ffffff')
-                              .dimensions('100%', '300px')
+                              .dimensions('100%', '260px')
                               .addBarSeries({
                                 name: 'Cash Flow Components',
                                 data: waterfallData

@@ -2,7 +2,7 @@ export interface Widget {
   id: string;
   title: string;
   component: 'metric' | 'chart';
-  type: 'total-pnl' | 'profitable-trades' | 'losing-trades' | 'total-trades' | 'risk-heatmap' | 'top-risks' | 'risk-trend' | 'risk-impact' | 'trade-distribution' | 'performance-center' | 'position-utilization' | 'monthly-risk' | 'cost-structure' | 'trade-value-pnl' | 'trader-performance' | 'currency-exposure' | 'cost-waterfall' | 'trade-flow-sankey' | 'commodity-correlation' | 'geographic-risk' | 'trade-lifecycle' | 'volatility-gauge' | 'portfolio-treemap' | 'cashflow-waterfall' | 'counterparty-network';
+  type: 'total-pnl' | 'profitable-trades' | 'losing-trades' | 'total-trades' | 'risk-heatmap' | 'top-risks' | 'risk-trend' | 'risk-impact' | 'trade-distribution' | 'performance-center' | 'position-utilization' | 'monthly-risk' | 'cost-structure' | 'trade-value-pnl' | 'trader-performance' | 'currency-exposure' | 'cost-waterfall' | 'geographic-risk' | 'trade-lifecycle' | 'cashflow-waterfall';
   gridCols?: string; // Tailwind grid column classes
   visible: boolean;
   order: number;
@@ -168,24 +168,7 @@ export const DEFAULT_WIDGETS: Widget[] = [
     visible: true,
     order: 16
   },
-  {
-    id: 'trade-flow-sankey',
-    title: 'Trade Flow Network (Sankey)',
-    component: 'chart',
-    type: 'trade-flow-sankey',
-    gridCols: 'lg:col-span-2',
-    visible: true,
-    order: 17
-  },
-  {
-    id: 'commodity-correlation',
-    title: 'Commodity Price Correlation Matrix',
-    component: 'chart',
-    type: 'commodity-correlation',
-    gridCols: 'lg:col-span-2',
-    visible: true,
-    order: 18
-  },
+
   {
     id: 'geographic-risk',
     title: 'Geographic Risk Distribution',
@@ -193,7 +176,7 @@ export const DEFAULT_WIDGETS: Widget[] = [
     type: 'geographic-risk',
     gridCols: 'lg:col-span-1',
     visible: true,
-    order: 19
+    order: 17
   },
   {
     id: 'trade-lifecycle',
@@ -202,25 +185,7 @@ export const DEFAULT_WIDGETS: Widget[] = [
     type: 'trade-lifecycle',
     gridCols: 'lg:col-span-2',
     visible: true,
-    order: 20
-  },
-  {
-    id: 'volatility-gauge',
-    title: 'Portfolio Volatility Gauges',
-    component: 'chart',
-    type: 'volatility-gauge',
-    gridCols: 'lg:col-span-1',
-    visible: true,
-    order: 21
-  },
-  {
-    id: 'portfolio-treemap',
-    title: 'Portfolio Composition Treemap',
-    component: 'chart',
-    type: 'portfolio-treemap',
-    gridCols: 'lg:col-span-2',
-    visible: true,
-    order: 22
+    order: 18
   },
   {
     id: 'cashflow-waterfall',
@@ -229,17 +194,9 @@ export const DEFAULT_WIDGETS: Widget[] = [
     type: 'cashflow-waterfall',
     gridCols: 'lg:col-span-2',
     visible: true,
-    order: 23
+    order: 19
   },
-  {
-    id: 'counterparty-network',
-    title: 'Counterparty Network Analysis',
-    component: 'chart',
-    type: 'counterparty-network',
-    gridCols: 'lg:col-span-2',
-    visible: true,
-    order: 24
-  }
+
 ];
 
 const WIDGET_STORAGE_KEY = 'dashboard-widget-layout';
