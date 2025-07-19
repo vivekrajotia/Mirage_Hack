@@ -50,8 +50,111 @@ import { applyFilters, getFilterSummary } from '@/lib/filter-utils';
 import AIInsightsOverlay from '../ai-insights-overlay';
 import { Widget, WidgetLayout, WidgetManager, DEFAULT_WIDGETS } from '@/lib/widget-config';
 import { MetricWidget, ChartWidget, WidgetSettings, SimpleResizableGrid } from './widgets';
+import { ChartInfoButton } from '@/components/ui/chart-info-button';
 import rawTrades from '@/app/xceler_eodservice_publisheddata (1).json';
 import ToastBanner from '../toast-banner';
+
+// Chart information lookup
+const getChartInfo = (widgetType: string) => {
+  const chartInfoMap: Record<string, {
+    description: string;
+    dataSource?: string;
+    insights?: string[];
+  }> = {
+    'risk-heatmap': {
+      description: "Visual representation of risk exposure across different commodities. Darker colors indicate higher risk levels, helping identify which commodities require closer attention.",
+      dataSource: "Commodity trading data aggregated by risk exposure levels",
+      insights: [
+        "Quickly identify high-risk commodities at a glance",
+        "Compare relative risk levels across your portfolio",
+        "Heat intensity correlates with potential impact on portfolio"
+      ]
+    },
+    'top-risks': {
+      description: "Bar chart showing the top 5 counterparties with highest risk exposure. Helps prioritize risk management efforts on the most impactful relationships.",
+      dataSource: "Counterparty exposure data ranked by total risk amount",
+      insights: [
+        "Focus risk monitoring on highest exposure counterparties",
+        "Identify concentration risks in your portfolio",
+        "Track which relationships need immediate attention"
+      ]
+    },
+    'risk-trend': {
+      description: "Line chart displaying risk levels over the last 10 trading days. The trend line helps identify whether overall portfolio risk is increasing or decreasing.",
+      dataSource: "Daily risk calculations from the last 10 trading sessions",
+      insights: [
+        "Monitor risk trajectory to anticipate potential issues",
+        "Identify patterns in risk accumulation or reduction",
+        "Smooth curve indicates stable risk management"
+      ]
+    },
+    'risk-impact': {
+      description: "Gauge showing overall portfolio risk score as a percentage. The score is calculated based on total risk exposure relative to acceptable thresholds.",
+      dataSource: "Aggregated portfolio risk metrics converted to percentage score",
+      insights: [
+        "Quick visual assessment of overall portfolio health",
+        "Risk score above 80% may require immediate action",
+        "Provides at-a-glance risk status for decision making"
+      ]
+    },
+    'trade-distribution': {
+      description: "Pie chart breaking down your trades by type (e.g., spot, futures, options). Helps understand portfolio composition and diversification.",
+      dataSource: "Trade classification data from your executed transactions",
+      insights: [
+        "Understand your trading strategy distribution",
+        "Identify over-concentration in specific trade types",
+        "Balance portfolio across different trading instruments"
+      ]
+    },
+    'performance-center': {
+      description: "Bar chart showing profit/loss performance by profit center or business unit. Helps identify which areas of the business are performing best.",
+      dataSource: "PnL data aggregated by organizational profit centers",
+      insights: [
+        "Identify top and bottom performing business units",
+        "Allocate resources to highest performing centers",
+        "Address underperforming areas with targeted strategies"
+      ]
+    },
+    'position-utilization': {
+      description: "Gauge displaying how much of your available position capacity is currently being utilized. Critical for position management and risk control.",
+      dataSource: "Current position data compared to maximum allowable limits",
+      insights: [
+        "Monitor position usage to avoid limit breaches",
+        "Plan future trades based on available capacity",
+        "High utilization may indicate need for position reduction"
+      ]
+    },
+    'monthly-risk': {
+      description: "Area chart showing risk levels across the last 6 months. The filled area helps visualize risk accumulation patterns over longer periods.",
+      dataSource: "Monthly aggregated risk exposure data over 6-month period",
+      insights: [
+        "Identify seasonal risk patterns in your portfolio",
+        "Track long-term risk management effectiveness",
+        "Plan strategic adjustments based on monthly trends"
+      ]
+    },
+    'cost-structure': {
+      description: "Pie chart breaking down your trading costs by category (finance, freight, insurance, other). Essential for understanding cost drivers and optimization opportunities.",
+      dataSource: "Cost data categorized by type from all trading activities",
+      insights: [
+        "Identify largest cost components for optimization",
+        "Compare cost structure against industry benchmarks",
+        "Target specific cost categories for reduction initiatives"
+      ]
+    },
+    'trade-value-pnl': {
+      description: "Scatter plot showing the relationship between trade value and PnL. Each point represents a trade, helping identify patterns between trade size and profitability.",
+      dataSource: "Individual trade data plotting value against profit/loss outcomes",
+      insights: [
+        "Identify optimal trade sizes for maximum profitability",
+        "Spot correlations between trade value and success",
+        "Detect outliers that may indicate exceptional opportunities or risks"
+      ]
+    }
+  };
+
+  return chartInfoMap[widgetType];
+};
 
 // Map raw data to Trade interface
 const tradesData = rawTrades.map(trade => ({
@@ -962,6 +1065,7 @@ export const DashboardClient = React.forwardRef<DashboardClientHandle, {}>((prop
                     key={widget.id}
                     widget={widget}
                     isDragging={draggedWidget === widget.id}
+                    chartInfo={getChartInfo(widget.type)}
                     onToggleVisibility={handleWidgetVisibilityToggle}
                     onDragStart={handleDragStart}
                     onDragEnd={handleDragEnd}

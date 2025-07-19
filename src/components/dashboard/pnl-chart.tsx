@@ -14,6 +14,7 @@ import {
   ChartTooltipContent,
   ChartContainer,
 } from '@/components/ui/chart';
+import { ChartInfoButton } from '@/components/ui/chart-info-button';
 import { format } from 'date-fns';
 
 interface PnlChartProps {
@@ -31,7 +32,21 @@ export function PnlChart({ data }: PnlChartProps) {
 
   return (
     <div style={{'--color-profit': 'hsl(var(--chart-3))', '--color-loss': 'hsl(var(--chart-2))'} as React.CSSProperties}>
-    <ChartContainer
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300">Profit & Loss Chart</h3>
+        <ChartInfoButton
+          title="Profit & Loss Chart"
+          description="This chart displays the profit and loss (PnL) for each trade over time. Green bars represent profitable trades, while red bars show losses."
+          dataSource="Trade data from your portfolio, showing MTM (Mark-to-Market) PnL values"
+          insights={[
+            "Identifies your most and least profitable trading periods",
+            "Helps track overall portfolio performance trends",
+            "Green bars indicate positive PnL (profits)",
+            "Red bars indicate negative PnL (losses)"
+          ]}
+        />
+      </div>
+      <ChartContainer
         config={{
             pnl: {
                 label: "PnL",

@@ -7,12 +7,18 @@ import {
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { ChartInfoButton } from '@/components/ui/chart-info-button';
 import { Widget } from '@/lib/widget-config';
 
 interface ChartWidgetProps {
   widget: Widget;
   children: React.ReactNode;
   isDragging?: boolean;
+  chartInfo?: {
+    description: string;
+    dataSource?: string;
+    insights?: string[];
+  };
   onToggleVisibility?: (widgetId: string, visible: boolean) => void;
   onDragStart?: (e: React.DragEvent, widgetId: string) => void;
   onDragEnd?: (e: React.DragEvent) => void;
@@ -24,6 +30,7 @@ export function ChartWidget({
   widget,
   children,
   isDragging = false,
+  chartInfo,
   onToggleVisibility,
   onDragStart,
   onDragEnd,
@@ -72,7 +79,17 @@ export function ChartWidget({
       </div>
 
       <CardHeader>
-        <CardTitle className="text-sm font-medium pr-12">{widget.title}</CardTitle>
+        <div className="flex items-center justify-between pr-12">
+          <CardTitle className="text-sm font-medium">{widget.title}</CardTitle>
+          {chartInfo && (
+            <ChartInfoButton
+              title={widget.title}
+              description={chartInfo.description}
+              dataSource={chartInfo.dataSource}
+              insights={chartInfo.insights}
+            />
+          )}
+        </div>
       </CardHeader>
       <CardContent className="pl-2">
         {children}
