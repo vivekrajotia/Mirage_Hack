@@ -13,6 +13,12 @@ import {
   Mail,
   Send,
   Loader2,
+  ChevronDown,
+  ChevronRight,
+  Eye,
+  EyeOff,
+  BarChart,
+  LineChart,
 } from 'lucide-react';
 
 import { Trade, ColumnVisibility } from '@/lib/types';
@@ -25,15 +31,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import { Badge } from '@/components/ui/badge';
 import { DatePickerWithRange } from '@/components/ui/date-picker';
 import { PnlChart } from './pnl-chart';
 import { DataTable } from './data-table';
+import { GraphEngine, GraphConfigBuilder } from '@/components/graph-engine';
 import { allColumns, defaultVisibleColumns } from './columns';
 import { ColumnSelector } from './column-selector';
 import { FilterSelector, FilterState } from './filter-selector';
 import { DataVisualizationPanel } from './data-visualization-panel';
 import { applyFilters, getFilterSummary } from '@/lib/filter-utils';
 import AIInsightsOverlay from '../ai-insights-overlay';
+import { Widget, WidgetLayout, WidgetManager, DEFAULT_WIDGETS } from '@/lib/widget-config';
+import { MetricWidget, ChartWidget, WidgetSettings } from './widgets';
 import rawTrades from '@/app/xceler_eodservice_publisheddata (1).json';
 
 // Map raw data to Trade interface
@@ -185,7 +200,13 @@ const tradesData = rawTrades.map(trade => ({
 const STORAGE_KEY = 'trade-table-column-visibility';
 const FILTER_STORAGE_KEY = 'trade-table-filters';
 
-export function DashboardClient() {
+export interface DashboardClientHandle {
+  exportToCSV: () => void;
+  setIsVisualizationOpen: (open: boolean) => void;
+  sendInsightsEmail: () => Promise<void>;
+}
+
+export const DashboardClient = React.forwardRef<DashboardClientHandle, {}>((props, ref) => {
   const [trades, setTrades] = React.useState<Trade[]>(tradesData);
   const [date, setDate] = React.useState<DateRange | undefined>(undefined);
   const [tradeType, setTradeType] = React.useState('All');
@@ -194,6 +215,13 @@ export function DashboardClient() {
   const [filters, setFilters] = React.useState<FilterState>({});
   const [isVisualizationOpen, setIsVisualizationOpen] = React.useState(false);
   const [isSendingInsights, setIsSendingInsights] = React.useState(false);
+  const [widgetLayout, setWidgetLayout] = React.useState<WidgetLayout>({ widgets: DEFAULT_WIDGETS, lastUpdated: Date.now() });
+  const [draggedWidget, setDraggedWidget] = React.useState<string | null>(null);
+  const [isDragOver, setIsDragOver] = React.useState<string | null>(null);
+  
+  // Collapsible states
+  const [isMetricWidgetsCollapsed, setIsMetricWidgetsCollapsed] = React.useState(false);
+  const [isChartWidgetsCollapsed, setIsChartWidgetsCollapsed] = React.useState(false);
 
   React.useEffect(() => {
     setIsMounted(true);
@@ -236,6 +264,10 @@ export function DashboardClient() {
         console.error('Error parsing saved filters:', error);
       }
     }
+
+    // Load widget layout from localStorage
+    const layout = WidgetManager.getWidgetLayout();
+    setWidgetLayout(layout);
   }, []);
 
   const filteredTrades = React.useMemo(() => {
@@ -286,7 +318,7 @@ export function DashboardClient() {
     }
   };
 
-  const exportToCSV = () => {
+  const exportToCSV = React.useCallback(() => {
     const visibleColumnKeys = visibleColumns.map(col => (col as any).accessorKey as string);
     const headers = visibleColumns.map(col => {
       if (typeof col.header === 'string') {
@@ -322,9 +354,9 @@ export function DashboardClient() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  };
+  }, [visibleColumns, filteredTrades]);
 
-  const sendInsightsEmail = async () => {
+  const sendInsightsEmail = React.useCallback(async () => {
     if (!filteredTrades.length) {
       alert('No data available to analyze');
       return;
@@ -344,21 +376,16 @@ export function DashboardClient() {
         chartData: filteredTrades
       };
 
-      const insights = await AIInsightsService.generateInsights(filteredTrades, contextInfo);
-      
+      const reportText = await AIInsightsService.generateInsights(filteredTrades, contextInfo);
+
       // Send email with insights
       const emailResponse = await fetch('/api/send-email', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          type: 'insights',
-          insights,
-          recipientEmail: 'subhamnaskar671@gmail.com',
-          dataCount: filteredTrades.length,
-          dateRange: date ? `${date.from?.toLocaleDateString()} - ${date.to?.toLocaleDateString()}` : 'All time',
-          filters: Object.keys(filters).length > 0 ? getFilterSummary(filters) : 'No filters applied'
+          name: 'AI Insights Bot',
+          email: 'subhamnaskar671@gmail.com',
+          message: reportText
         }),
       });
 
@@ -373,105 +400,586 @@ export function DashboardClient() {
     } finally {
       setIsSendingInsights(false);
     }
+  }, [filteredTrades, date, filters]);
+
+  // Expose functions via ref
+  React.useImperativeHandle(ref, () => ({
+    exportToCSV,
+    setIsVisualizationOpen,
+    sendInsightsEmail,
+  }), [exportToCSV, sendInsightsEmail]);
+
+  // Widget Management Functions
+  const handleWidgetVisibilityToggle = (widgetId: string, visible: boolean) => {
+    const updatedLayout = WidgetManager.toggleWidgetVisibility(widgetId, visible);
+    setWidgetLayout(updatedLayout);
+  };
+
+  const handleResetWidgets = () => {
+    const defaultLayout = { widgets: DEFAULT_WIDGETS, lastUpdated: Date.now() };
+    WidgetManager.saveWidgetLayout(defaultLayout);
+    setWidgetLayout(defaultLayout);
+  };
+
+  // Drag and Drop Functions
+  const handleDragStart = (e: React.DragEvent, widgetId: string) => {
+    setDraggedWidget(widgetId);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', widgetId);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedWidget(null);
+    setIsDragOver(null);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (e: React.DragEvent, targetWidgetId: string) => {
+    e.preventDefault();
+    
+    const sourceWidgetId = e.dataTransfer.getData('text/plain');
+    if (sourceWidgetId === targetWidgetId || !sourceWidgetId) return;
+
+    const widgets = [...widgetLayout.widgets];
+    const sourceIndex = widgets.findIndex(w => w.id === sourceWidgetId);
+    const targetIndex = widgets.findIndex(w => w.id === targetWidgetId);
+
+    if (sourceIndex === -1 || targetIndex === -1) return;
+
+    // Reorder widgets
+    const [removed] = widgets.splice(sourceIndex, 1);
+    widgets.splice(targetIndex, 0, removed);
+
+    const updatedLayout = WidgetManager.reorderWidgets(widgets);
+    setWidgetLayout(updatedLayout);
+    setDraggedWidget(null);
+    setIsDragOver(null);
   };
 
   if (!isMounted) {
     return null; // Or a loading spinner
   }
 
+  // Get visible widgets sorted by order
+  const visibleWidgets = widgetLayout.widgets
+    .filter(widget => widget.visible)
+    .sort((a, b) => a.order - b.order);
+
+  const visibleMetricWidgets = visibleWidgets.filter(w => w.component === 'metric');
+  const visibleChartWidgets = visibleWidgets.filter(w => w.component === 'chart');
+
   return (
     <div className="flex flex-col gap-6 relative">
-      {/* Send Insights Button - Top Right */}
-      <div className="fixed top-4 right-4 z-50">
-        <Button
-          onClick={sendInsightsEmail}
-          disabled={isSendingInsights || !filteredTrades.length}
-          className="bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
-          size="lg"
-        >
-          {isSendingInsights ? (
-            <>
+      {/* Dashboard Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold">Dashboard Overview</h1>
+          <p className="text-muted-foreground">Monitor your trading performance and analytics</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <WidgetSettings
+            widgets={widgetLayout.widgets}
+            onWidgetVisibilityChange={handleWidgetVisibilityToggle}
+            onResetToDefault={handleResetWidgets}
+          />
+          {isSendingInsights && (
+            <Button
+              disabled
+              variant="outline"
+              size="sm"
+              className="opacity-70"
+            >
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Sending...
-            </>
-          ) : (
-            <>
-              <Send className="h-4 w-4 mr-2" />
-              Send Insights
-            </>
+              Sending AI Insights...
+            </Button>
           )}
-        </Button>
+        </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total MTM PnL</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div
-              className={`text-2xl font-bold ${
-                totalPnl >= 0 ? 'text-green-600' : 'text-red-600'
-              }`}
-            >
-              {totalPnl.toLocaleString('en-US', {
-                style: 'currency',
-                currency: 'USD',
+      {/* Collapsible Metric Widgets Section */}
+      {visibleMetricWidgets.length > 0 && (
+        <Collapsible open={!isMetricWidgetsCollapsed} onOpenChange={(open) => setIsMetricWidgetsCollapsed(!open)}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <BarChart className="h-5 w-5 text-blue-600" />
+              <h2 className="text-xl font-semibold">Key Metrics</h2>
+              <Badge variant="secondary" className="ml-2">
+                {visibleMetricWidgets.length} widgets
+              </Badge>
+            </div>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" size="sm" className="p-2">
+                {isMetricWidgetsCollapsed ? (
+                  <ChevronRight className="h-4 w-4" />
+                ) : (
+                  <ChevronDown className="h-4 w-4" />
+                )}
+              </Button>
+            </CollapsibleTrigger>
+          </div>
+          <CollapsibleContent className="space-y-4">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+              {visibleMetricWidgets.map((widget) => {
+                let value: string | number = '';
+                let subtitle = '';
+                
+                switch (widget.type) {
+                  case 'total-pnl':
+                    value = totalPnl.toLocaleString('en-US', {
+                      style: 'currency',
+                      currency: 'USD',
+                    });
+                    subtitle = 'Based on current filters';
+                    break;
+                  case 'profitable-trades':
+                    value = profitableTrades;
+                    subtitle = `${totalTrades > 0 ? `${((profitableTrades / totalTrades) * 100).toFixed(1)}%` : '0%'} of total trades`;
+                    break;
+                  case 'losing-trades':
+                    value = losingTrades;
+                    subtitle = `${totalTrades > 0 ? `${((losingTrades / totalTrades) * 100).toFixed(1)}%` : '0%'} of total trades`;
+                    break;
+                  case 'total-trades':
+                    value = totalTrades;
+                    subtitle = 'Total trades in selected period';
+                    break;
+                }
+
+                return (
+                  <MetricWidget
+                    key={widget.id}
+                    widget={widget}
+                    value={value}
+                    subtitle={subtitle}
+                    isDragging={draggedWidget === widget.id}
+                    onToggleVisibility={handleWidgetVisibilityToggle}
+                    onDragStart={handleDragStart}
+                    onDragEnd={handleDragEnd}
+                    onDragOver={handleDragOver}
+                    onDrop={handleDrop}
+                  />
+                );
               })}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Based on current filters
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Profitable Trades
-            </CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{profitableTrades}</div>
-            <p className="text-xs text-muted-foreground">
-              {totalTrades > 0 ? `${((profitableTrades / totalTrades) * 100).toFixed(1)}%` : '0%'} of total trades
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Losing Trades</CardTitle>
-            <TrendingDown className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{losingTrades}</div>
-             <p className="text-xs text-muted-foreground">
-               {totalTrades > 0 ? `${((losingTrades / totalTrades) * 100).toFixed(1)}%` : '0%'} of total trades
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Trades</CardTitle>
-            <Filter className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalTrades}</div>
-            <p className="text-xs text-muted-foreground">
-              Total trades in selected period
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+          </CollapsibleContent>
+        </Collapsible>
+      )}
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
-        <Card className="lg:col-span-5">
+      {/* Collapsible Chart Widgets Section */}
+      {visibleChartWidgets.length > 0 && (
+        <Collapsible open={!isChartWidgetsCollapsed} onOpenChange={(open) => setIsChartWidgetsCollapsed(!open)}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <LineChart className="h-5 w-5 text-green-600" />
+              <h2 className="text-xl font-semibold">Analytics & Charts</h2>
+              <Badge variant="secondary" className="ml-2">
+                {visibleChartWidgets.length} widgets
+              </Badge>
+            </div>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" size="sm" className="p-2">
+                {isChartWidgetsCollapsed ? (
+                  <ChevronRight className="h-4 w-4" />
+                ) : (
+                  <ChevronDown className="h-4 w-4" />
+                )}
+              </Button>
+            </CollapsibleTrigger>
+          </div>
+          <CollapsibleContent className="space-y-4">
+            <div className="grid gap-6 lg:grid-cols-2">
+              {visibleChartWidgets.map((widget) => {
+                let chartContent: React.ReactNode = null;
+                
+                switch (widget.type) {
+                  case 'risk-heatmap':
+                    chartContent = (
+                      <div className="h-[300px]">
+                        <GraphEngine
+                          config={(() => {
+                            const commodityRisks = filteredTrades.reduce((acc, trade) => {
+                              const commodity = trade.commodity || 'Unknown';
+                              if (!acc[commodity]) acc[commodity] = { totalPnL: 0, count: 0, avgRisk: 0 };
+                              acc[commodity].totalPnL += Math.abs(trade.mtm_pnl);
+                              acc[commodity].count++;
+                              acc[commodity].avgRisk = acc[commodity].totalPnL / acc[commodity].count;
+                              return acc;
+                            }, {} as Record<string, any>);
+
+                            const heatmapData = Object.entries(commodityRisks).map(([commodity, data], index) => [
+                              index, 0, Math.min(data.avgRisk / 1000000, 100) // Scale risk to 0-100
+                            ]);
+
+                            return {
+                              xAxis: {
+                                type: 'category',
+                                data: Object.keys(commodityRisks).map((_, i) => `Risk${i + 1}`)
+                              },
+                              yAxis: {
+                                type: 'category',
+                                data: ['Impact']
+                              },
+                              visualMap: {
+                                min: 0,
+                                max: 100,
+                                calculable: true,
+                                orient: 'horizontal',
+                                left: 'center',
+                                bottom: '15%'
+                              },
+                              series: [{
+                                name: 'Risk Level',
+                                type: 'heatmap',
+                                data: heatmapData,
+                                label: { show: true },
+                                itemStyle: { borderRadius: 3 }
+                              }],
+                              tooltip: { trigger: 'item' },
+                              backgroundColor: '#ffffff',
+                              width: '100%',
+                              height: '300px'
+                            };
+                          })()}
+                        />
+                      </div>
+                    );
+                    break;
+
+                  case 'top-risks':
+                    chartContent = (
+                      <div className="h-[300px]">
+                        <GraphEngine
+                          config={(() => {
+                            const counterpartyRisks = filteredTrades.reduce((acc, trade) => {
+                              const counterparty = trade.counterparty || 'Unknown';
+                              if (!acc[counterparty]) acc[counterparty] = 0;
+                              acc[counterparty] += Math.abs(trade.mtm_pnl);
+                              return acc;
+                            }, {} as Record<string, number>);
+
+                            const topRisks = Object.entries(counterpartyRisks)
+                              .sort(([, a], [, b]) => b - a)
+                              .slice(0, 5);
+
+                            return new GraphConfigBuilder()
+                              .title('')
+                              .xAxis('category', topRisks.map(([name]) => name))
+                              .yAxis('value')
+                              .tooltip('axis')
+                              .legend(false)
+                              .background('#ffffff')
+                              .dimensions('100%', '300px')
+                              .addBarSeries({
+                                name: 'Risk Exposure',
+                                data: topRisks.map(([, value]) => (value / 1000000).toFixed(1)),
+                                color: '#ff6b6b'
+                              })
+                              .build();
+                          })()}
+                        />
+                      </div>
+                    );
+                    break;
+
+                  case 'risk-trend':
+                    chartContent = (
+                      <div className="h-[300px]">
+                        <GraphEngine
+                          config={(() => {
+                            const timeRisks = filteredTrades.reduce((acc, trade) => {
+                              const date = new Date(trade.trade_date_time).toISOString().split('T')[0];
+                              if (!acc[date]) acc[date] = 0;
+                              acc[date] += Math.abs(trade.mtm_pnl);
+                              return acc;
+                            }, {} as Record<string, number>);
+
+                            const sortedDates = Object.keys(timeRisks).sort();
+                            const riskValues = sortedDates.map(date => (timeRisks[date] / 1000000).toFixed(1));
+
+                            return new GraphConfigBuilder()
+                              .title('')
+                              .xAxis('category', sortedDates.slice(-10))
+                              .yAxis('value')
+                              .tooltip('axis')
+                              .legend(false)
+                              .background('#ffffff')
+                              .dimensions('100%', '300px')
+                              .addLineSeries({
+                                name: 'Daily Risk',
+                                data: riskValues.slice(-10),
+                                smooth: true,
+                                color: '#ffc000',
+                                areaStyle: { opacity: 0.3 }
+                              })
+                              .build();
+                          })()}
+                        />
+                      </div>
+                    );
+                    break;
+
+                  case 'risk-impact':
+                    chartContent = (
+                      <div className="h-[300px]">
+                        <GraphEngine
+                          config={(() => {
+                            const totalRisk = Math.abs(totalPnl);
+                            const riskScore = Math.min((totalRisk / 10000000) * 100, 100);
+
+                            return new GraphConfigBuilder()
+                              .background('#ffffff')
+                              .dimensions('100%', '300px')
+                              .addGaugeSeries({
+                                name: 'Risk Score',
+                                value: riskScore,
+                                min: 0,
+                                max: 100,
+                                unit: '%'
+                              })
+                              .build();
+                          })()}
+                        />
+                      </div>
+                    );
+                    break;
+
+                  case 'trade-distribution':
+                    chartContent = (
+                      <div className="h-[300px]">
+                        <GraphEngine
+                          config={(() => {
+                            const tradeTypes = filteredTrades.reduce((acc, trade) => {
+                              const type = trade.trade_type || 'Unknown';
+                              if (!acc[type]) acc[type] = 0;
+                              acc[type]++;
+                              return acc;
+                            }, {} as Record<string, number>);
+
+                            const pieData = Object.entries(tradeTypes).map(([name, value]) => ({
+                              name,
+                              value
+                            }));
+
+                            return new GraphConfigBuilder()
+                              .title('')
+                              .tooltip('item')
+                              .legend(true, 'bottom')
+                              .background('#ffffff')
+                              .dimensions('100%', '300px')
+                              .addPieSeries({
+                                name: 'Trade Types',
+                                data: pieData,
+                                radius: ['30%', '70%']
+                              })
+                              .build();
+                          })()}
+                        />
+                      </div>
+                    );
+                    break;
+
+                  case 'performance-center':
+                    chartContent = (
+                      <div className="h-[300px]">
+                        <GraphEngine
+                          config={(() => {
+                            const profitCenters = filteredTrades.reduce((acc, trade) => {
+                              const center = trade.profitcenter || 'Unknown';
+                              if (!acc[center]) acc[center] = 0;
+                              acc[center] += trade.mtm_pnl;
+                              return acc;
+                            }, {} as Record<string, number>);
+
+                            const centers = Object.keys(profitCenters);
+                            const values = Object.values(profitCenters).map(v => (v / 1000000).toFixed(1));
+
+                            return new GraphConfigBuilder()
+                              .title('')
+                              .xAxis('category', centers)
+                              .yAxis('value')
+                              .tooltip('axis')
+                              .legend(false)
+                              .background('#ffffff')
+                              .dimensions('100%', '300px')
+                              .addBarSeries({
+                                name: 'PnL (M)',
+                                data: values,
+                                color: '#70ad47'
+                              })
+                              .build();
+                          })()}
+                        />
+                      </div>
+                    );
+                    break;
+
+                  case 'position-utilization':
+                    chartContent = (
+                      <div className="h-[300px]">
+                        <GraphEngine
+                          config={(() => {
+                            const totalBuyPositions = filteredTrades.reduce((sum, trade) => sum + (trade.buy_open_position || 0), 0);
+                            const totalSellPositions = filteredTrades.reduce((sum, trade) => sum + (trade.sell_open_position || 0), 0);
+                            const totalPositions = totalBuyPositions + totalSellPositions;
+                            
+                            const utilizationPercentage = totalPositions > 0 ? Math.min((totalPositions / 100000) * 100, 100) : 0;
+
+                            return new GraphConfigBuilder()
+                              .background('#ffffff')
+                              .dimensions('100%', '300px')
+                              .addGaugeSeries({
+                                name: 'Position Usage',
+                                value: utilizationPercentage,
+                                min: 0,
+                                max: 100,
+                                unit: '%'
+                              })
+                              .build();
+                          })()}
+                        />
+                      </div>
+                    );
+                    break;
+
+                  case 'monthly-risk':
+                    chartContent = (
+                      <div className="h-[300px]">
+                        <GraphEngine
+                          config={(() => {
+                            const monthlyRisks = filteredTrades.reduce((acc, trade) => {
+                              const date = new Date(trade.trade_date_time);
+                              const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                              if (!acc[monthKey]) acc[monthKey] = 0;
+                              acc[monthKey] += Math.abs(trade.mtm_pnl);
+                              return acc;
+                            }, {} as Record<string, number>);
+
+                            const sortedMonths = Object.keys(monthlyRisks).sort();
+                            const values = sortedMonths.map(month => (monthlyRisks[month] / 1000000).toFixed(1));
+
+                            return new GraphConfigBuilder()
+                              .title('')
+                              .xAxis('category', sortedMonths.slice(-6))
+                              .yAxis('value')
+                              .tooltip('axis')
+                              .legend(false)
+                              .background('#ffffff')
+                              .dimensions('100%', '300px')
+                              .addAreaSeries({
+                                name: 'Monthly Risk (M)',
+                                data: values.slice(-6),
+                                color: '#9966cc',
+                                opacity: 0.6
+                              })
+                              .build();
+                          })()}
+                        />
+                      </div>
+                    );
+                    break;
+
+                  default:
+                    chartContent = <div className="h-[300px] flex items-center justify-center text-muted-foreground">Chart not implemented</div>;
+                }
+
+                return (
+                  <ChartWidget
+                    key={widget.id}
+                    widget={widget}
+                    isDragging={draggedWidget === widget.id}
+                    onToggleVisibility={handleWidgetVisibilityToggle}
+                    onDragStart={handleDragStart}
+                    onDragEnd={handleDragEnd}
+                    onDragOver={handleDragOver}
+                    onDrop={handleDrop}
+                  >
+                    {chartContent}
+                  </ChartWidget>
+                );
+              })}
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+      )}
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Cost Structure Analysis */}
+        <Card className="lg:col-span-1">
           <CardHeader>
-            <CardTitle>MTM PnL Over Time</CardTitle>
+            <CardTitle className="text-sm font-medium">Cost Structure Breakdown</CardTitle>
           </CardHeader>
           <CardContent className="pl-2">
-            <PnlChart data={filteredTrades} />
+            <div className="h-[300px]">
+              <GraphEngine
+                config={(() => {
+                  const totalFinanceCost = filteredTrades.reduce((sum, trade) => sum + (trade.finance_cost || 0), 0);
+                  const totalFreightCost = filteredTrades.reduce((sum, trade) => sum + (trade.freight_cost || 0), 0);
+                  const totalInsuranceCost = filteredTrades.reduce((sum, trade) => sum + (trade.insurance_cost || 0), 0);
+                  const totalOtherCost = filteredTrades.reduce((sum, trade) => sum + (trade.other_cost || 0), 0);
+
+                  const costData = [
+                    { name: 'Finance', value: totalFinanceCost },
+                    { name: 'Freight', value: totalFreightCost },
+                    { name: 'Insurance', value: totalInsuranceCost },
+                    { name: 'Other', value: totalOtherCost }
+                  ].filter(item => item.value > 0);
+
+                  return new GraphConfigBuilder()
+                    .title('')
+                    .tooltip('item')
+                    .legend(true, 'right')
+                    .background('#ffffff')
+                    .dimensions('100%', '300px')
+                    .addPieSeries({
+                      name: 'Cost Types',
+                      data: costData,
+                      radius: ['40%', '70%']
+                    })
+                    .build();
+                })()}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Error/Defect Rate - Trade Value vs PnL Scatter */}
+        <Card className="lg:col-span-1">
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">Trade Value vs PnL Analysis</CardTitle>
+          </CardHeader>
+          <CardContent className="pl-2">
+            <div className="h-[300px]">
+              <GraphEngine
+                config={(() => {
+                  const scatterData = filteredTrades
+                    .filter(trade => trade.trade_value && trade.mtm_pnl)
+                    .slice(0, 100) // Limit points for performance
+                    .map(trade => [
+                      trade.trade_value / 1000000, // X: Trade Value in millions
+                      trade.mtm_pnl / 1000000      // Y: PnL in millions
+                    ]);
+
+                  return new GraphConfigBuilder()
+                    .title('')
+                    .xAxis('value', undefined, { name: 'Trade Value (M)' })
+                    .yAxis('value', { name: 'PnL (M)' })
+                    .tooltip('item')
+                    .legend(false)
+                    .background('#ffffff')
+                    .dimensions('100%', '300px')
+                    .addScatterSeries({
+                      name: 'Trade Points',
+                      data: scatterData,
+                      symbolSize: 6
+                    })
+                    .build();
+                })()}
+              />
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -549,4 +1057,6 @@ export function DashboardClient() {
 
     </div>
   );
-}
+});
+
+DashboardClient.displayName = 'DashboardClient';

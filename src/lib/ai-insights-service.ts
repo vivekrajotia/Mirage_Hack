@@ -1,7 +1,7 @@
 import { Trade } from './types';
 import { FilterState } from '@/components/dashboard/filter-selector';
 
-const GEMINI_API_KEY =  process.env.GEMINI_API_KEY;
+const GEMINI_API_KEY =  'AIzaSyBFqwV3wtZ7nt0LmqpzMdvE6XoAxK_yk8c';
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent';
 
 interface DashboardContext {
