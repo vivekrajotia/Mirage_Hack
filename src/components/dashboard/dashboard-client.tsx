@@ -53,6 +53,7 @@ import { MetricWidget, ChartWidget, WidgetSettings, SimpleResizableGrid } from '
 import { ChartInfoButton } from '@/components/ui/chart-info-button';
 import rawTrades from '@/app/xceler_eodservice_publisheddata (1).json';
 import ToastBanner from '../toast-banner';
+import { EodDateFilter } from './eod-date-filter';
 
 // Chart information lookup
 const getChartInfo = (widgetType: string) => {
@@ -360,10 +361,20 @@ export interface DashboardClientHandle {
   sendInsightsEmail: () => Promise<void>;
 }
 
-export const DashboardClient = React.forwardRef<DashboardClientHandle, {}>((props, ref) => {
+interface DashboardClientProps {
+  eodDates: string[];
+}
+
+export const DashboardClient = React.forwardRef<
+  DashboardClientHandle,
+  DashboardClientProps
+>((props, ref) => {
   const [trades, setTrades] = React.useState<Trade[]>(tradesData);
   const [date, setDate] = React.useState<DateRange | undefined>(undefined);
   const [tradeType, setTradeType] = React.useState('All');
+  const [eodDate, setEodDate] = React.useState<string | null>(
+    props.eodDates?.[0] ?? null
+  );
   const [isMounted, setIsMounted] = React.useState(false);
   const [columnVisibility, setColumnVisibility] = React.useState<ColumnVisibility>({});
   const [filters, setFilters] = React.useState<FilterState>({});
@@ -426,12 +437,18 @@ export const DashboardClient = React.forwardRef<DashboardClientHandle, {}>((prop
   }, []);
 
   const filteredTrades = React.useMemo(() => {
-    if (!isMounted || !date) {
-        return trades;
+    if (!isMounted) return [];
+    
+    let filtered = [...trades];
+    
+    // EOD Date Filter
+    if (eodDate) {
+      filtered = filtered.filter(trade => trade.eod_run_date === eodDate);
     }
 
-    // Apply basic date and type filters first
-    let filtered = trades.filter((trade) => {
+    // Existing Date Range Filter
+    if (date?.from && date?.to) {
+      filtered = filtered.filter((trade) => {
       const tradeDate = new Date(trade.trade_date_time);
       const isDateInRange =
         (!date?.from || tradeDate >= date.from) &&
@@ -441,12 +458,26 @@ export const DashboardClient = React.forwardRef<DashboardClientHandle, {}>((prop
         (tradeType === 'Sell' && trade.trade_transaction_type === 1);
       return isDateInRange && isTypeMatch;
     });
+    }
 
     // Apply advanced filters
     filtered = applyFilters(filtered, filters);
 
     return filtered;
-  }, [trades, date, tradeType, filters, isMounted]);
+  }, [trades, date, tradeType, filters, isMounted, eodDate]);
+
+  const pnlDataForChart = React.useMemo((): [number, number][] => {
+    return filteredTrades
+      .map((trade): [number, number] | null => {
+        const tradeDate = new Date(trade.trade_date_time);
+        if (!isNaN(tradeDate.getTime()) && typeof trade.mtm_pnl === 'number') {
+          return [tradeDate.getTime(), trade.mtm_pnl];
+        }
+        return null;
+      })
+      .filter((item): item is [number, number] => item !== null)
+      .sort((a, b) => a[0] - b[0]);
+  }, [filteredTrades]);
 
   const totalPnl = React.useMemo(() => {
     return filteredTrades.reduce((acc, trade) => acc + trade.mtm_pnl, 0);
@@ -663,6 +694,14 @@ export const DashboardClient = React.forwardRef<DashboardClientHandle, {}>((prop
             </Button>
           )}
         </div>
+      </div>
+
+      <div className="pt-4">
+        <EodDateFilter
+          selectedDate={eodDate}
+          onDateChange={setEodDate}
+          dates={props.eodDates}
+        />
       </div>
 
       {/* Collapsible Metric Widgets Section */}
@@ -1414,7 +1453,6 @@ export const DashboardClient = React.forwardRef<DashboardClientHandle, {}>((prop
         <CardContent>
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div className="flex flex-col gap-4 md:flex-row md:items-center">
-                    <DatePickerWithRange date={date} setDate={setDate} />
                     <Select value={tradeType} onValueChange={setTradeType}>
                         <SelectTrigger className="w-full md:w-[180px]">
                         <SelectValue placeholder="Filter by type..." />

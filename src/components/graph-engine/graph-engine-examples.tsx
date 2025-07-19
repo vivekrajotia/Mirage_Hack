@@ -1,10 +1,28 @@
 'use client';
 
 import React, { useState } from 'react';
-import { GraphEngine, GraphEngineConfig, createLineChartConfig, createBarChartConfig, createPieChartConfig, createScatterChartConfig } from './graph-engine';
+import {
+  GraphEngine,
+  createLineChartConfig,
+  createBarChartConfig,
+  createPieChartConfig,
+  createScatterChartConfig,
+  ChartType,
+  AxisConfig,
+  GraphEngineConfig,
+} from './graph-engine';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import eodData from '@/app/xceler_eodservice_publisheddata (1).json';
+import { DataTable } from '@/components/dashboard/data-table';
+import { ColumnDef } from '@tanstack/react-table';
 
 // Sample data for examples
 const sampleLineData = [
@@ -30,8 +48,216 @@ const sampleScatterData = Array.from({ length: 50 }, (_, i) => ({
   size: Math.random() * 20 + 5
 }));
 
-export const GraphEngineExamples: React.FC = () => {
+// This is a simplified data processing pipeline for the preview.
+export const processPreviewData = (config: any) => {
+  if (!config) return null;
+
+  // 1. Apply filters
+  const filteredData = eodData.filter(row => {
+    if (!config.filters || config.filters.length === 0) {
+      return true;
+    }
+    return config.filters.every((filter: any) => {
+      if (!filter.field || !filter.condition) return true;
+      const rowValue = (row as any)[filter.field];
+      const filterValue = filter.value;
+      if (rowValue === null || rowValue === undefined) return false;
+
+      switch (filter.condition) {
+        case 'equals': return String(rowValue).toLowerCase() === String(filterValue).toLowerCase();
+        case 'does not equal': return String(rowValue).toLowerCase() !== String(filterValue).toLowerCase();
+        case 'contains': return String(rowValue).toLowerCase().includes(String(filterValue).toLowerCase());
+        case 'does not contain': return !String(rowValue).toLowerCase().includes(String(filterValue).toLowerCase());
+        case 'is greater than': return Number(rowValue) > Number(filterValue);
+        case 'is less than': return Number(rowValue) < Number(filterValue);
+        default: return true;
+      }
+    });
+  });
+
+  const {
+    type,
+    xAxis,
+    yAxis,
+    aggregation,
+    valueField,
+    title,
+    colorBy,
+    selectedColumns,
+  } = config;
+
+  if (type === 'Data Table') {
+    const data = filteredData.length > 0 ? filteredData : eodData;
+    const columns: ColumnDef<any>[] = selectedColumns.map((key: string) => ({
+      accessorKey: key,
+      header: key,
+    }));
+    return {
+      renderType: 'table',
+      data,
+      columns,
+      title,
+    };
+  }
+
+  // 2. Aggregate and format data for charts
+  if (type === 'Bar Chart' || type === 'Line Chart') {
+    const groupField = xAxis;
+    const metricField = yAxis;
+    const seriesField = colorBy;
+
+    const groups = filteredData.reduce((acc, row) => {
+      const xKey = (row as any)[groupField];
+      const seriesKey = seriesField ? (row as any)[seriesField] : 'value';
+      const value = Number((row as any)[metricField]);
+
+      if (xKey !== undefined && !isNaN(value)) {
+        if (!acc[xKey]) acc[xKey] = {};
+        if (!acc[xKey][seriesKey]) acc[xKey][seriesKey] = [];
+        acc[xKey][seriesKey].push(value);
+      }
+      return acc;
+    }, {} as Record<string, Record<string, number[]>>);
+
+    const categories = Object.keys(groups);
+    const seriesNames = Object.keys(Object.values(groups)[0] || {});
+
+    const seriesData = seriesNames.map(seriesName => {
+      return {
+        name: seriesName,
+        type: (type === 'Bar Chart' ? 'bar' : 'line') as ChartType,
+        stack: seriesField ? 'total' : undefined, // Stack if colorBy is used
+        data: categories.map(cat => {
+          const seriesValues = groups[cat][seriesName] || [];
+          let result = 0;
+          switch (aggregation) {
+            case 'sum': result = seriesValues.reduce((a, b) => a + b, 0); break;
+            case 'average': result = seriesValues.length > 0 ? seriesValues.reduce((a, b) => a + b, 0) / seriesValues.length : 0; break;
+            case 'count': result = seriesValues.length; break;
+            case 'min': result = seriesValues.length > 0 ? Math.min(...seriesValues) : 0; break;
+            case 'max': result = seriesValues.length > 0 ? Math.max(...seriesValues) : 0; break;
+            default: result = 0;
+          }
+          return result;
+        })
+      };
+    });
+
+    const chartConfig = {
+      title: { text: title, left: 'center' },
+      tooltip: { trigger: 'axis' },
+      legend: { bottom: 0 },
+      xAxis: { type: 'category', data: categories },
+      yAxis: { type: 'value' },
+      series: seriesData,
+    } as GraphEngineConfig;
+    return {
+      renderType: 'chart',
+      config: chartConfig,
+      title,
+    };
+  }
+  if (type === 'Pie Chart') {
+    const groupField = colorBy || xAxis;
+    const metricField = valueField;
+
+    const groups = filteredData.reduce((acc, row) => {
+      const key = (row as any)[groupField];
+      const value = Number((row as any)[metricField]);
+      if (key !== undefined && !isNaN(value)) {
+        if (!acc[key]) {
+          acc[key] = [];
+        }
+        acc[key].push(value);
+      }
+      return acc;
+    }, {} as Record<string, number[]>);
+
+    const aggregatedData = Object.entries(groups).map(([key, values]) => {
+      let result = 0;
+      switch (aggregation) {
+        case 'sum': result = values.reduce((a, b) => a + b, 0); break;
+        case 'average': result = values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0; break;
+        case 'count': result = values.length; break;
+        case 'min': result = values.length > 0 ? Math.min(...values) : 0; break;
+        case 'max': result = values.length > 0 ? Math.max(...values) : 0; break;
+        default: result = 0;
+      }
+      return { name: key, value: result };
+    });
+
+    const chartConfig = createPieChartConfig(aggregatedData, 'name', 'value', {
+      title: { text: title, left: 'center' },
+    });
+    return {
+      renderType: 'chart',
+      config: chartConfig,
+      title,
+    };
+  }
+
+  if (type === 'Scatter Chart') {
+    const chartConfig = createScatterChartConfig(filteredData, xAxis, yAxis, {
+      title: { text: title, left: 'center' },
+    });
+    return {
+      renderType: 'chart',
+      config: chartConfig,
+      title,
+    };
+  }
+
+  return null;
+};
+
+export const GraphEngineExamples: React.FC<{ previewConfig?: any }> = ({
+  previewConfig,
+}) => {
   const [selectedExample, setSelectedExample] = useState<string>('line');
+
+  if (previewConfig) {
+    const previewData = processPreviewData(previewConfig);
+
+    if (!previewData) {
+      return (
+        <div className="p-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Preview Unavailable</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>
+                Could not generate a preview for the selected configuration.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
+
+    return (
+      <div className="p-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>{previewData.title}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {previewData.renderType === 'chart' && previewData.config && (
+              <GraphEngine config={previewData.config} />
+            )}
+            {previewData.renderType === 'table' &&
+              previewData.data &&
+              previewData.columns && (
+                <DataTable
+                  columns={previewData.columns}
+                  data={previewData.data}
+                />
+              )}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   // Line Chart Example
   const lineChartConfig: GraphEngineConfig = createLineChartConfig(
@@ -103,7 +329,7 @@ export const GraphEngineExamples: React.FC = () => {
     legend: { bottom: 0 },
     xAxis: {
       type: 'value',
-      boundaryGap: [0, 0.01]
+      boundaryGap: ['0', '0.01']
     },
     yAxis: {
       type: 'category',

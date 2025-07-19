@@ -9,6 +9,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "db:setup": "node -r ts-node/register src/lib/db/setup.ts",
+    "db:setup-dashboards": "node -r ts-node/register src/lib/db/setup-dashboards.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -40,6 +42,9 @@
     "@radix-ui/react-toast": "^1.2.6",
     "@radix-ui/react-tooltip": "^1.1.8",
     "@tanstack/react-table": "^8.19.2",
+    "@types/animejs": "^3.1.13",
+    "@types/three": "^0.178.1",
+    "animejs": "^4.0.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^3.6.0",
@@ -56,11 +61,16 @@
     "react": "^18.3.1",
     "react-day-picker": "^8.10.1",
     "react-dom": "^18.3.1",
+    "react-grid-layout": "^1.5.2",
     "react-hook-form": "^7.54.2",
+    "react-resizable": "^3.0.5",
     "react-resizable-panels": "^3.0.3",
     "recharts": "^2.15.1",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^5.1.7",
     "tailwind-merge": "^3.0.1",
     "tailwindcss-animate": "^1.0.7",
+    "three": "^0.178.0",
     "zod": "^3.24.2"
   },
   "devDependencies": {
@@ -71,6 +81,7 @@
     "genkit-cli": "^1.13.0",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
+    "ts-node": "^10.9.2",
     "typescript": "^5"
   }
 }
