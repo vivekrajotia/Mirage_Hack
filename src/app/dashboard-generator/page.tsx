@@ -349,37 +349,91 @@ const DashboardGenerator = () => {
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <Link href="/widgetGen/widgetGen">
-                    <SidebarMenuButton>
-                      <Settings className="w-5 h-5" />
-                      Widget Gen
+                    <SidebarMenuButton
+                      isActive={activeItem === 'widget-gen'}
+                      className="group relative overflow-hidden transition-all duration-300 hover:bg-gradient-to-r hover:from-purple-50 hover:to-indigo-50 dark:hover:from-purple-900/20 dark:hover:to-indigo-900/20 hover:shadow-md hover:scale-105 data-[active=true]:bg-gradient-to-r data-[active=true]:from-purple-100 data-[active=true]:to-indigo-100 dark:data-[active=true]:from-purple-900/30 dark:data-[active=true]:to-indigo-900/30 data-[active=true]:shadow-sm border-0 data-[active=true]:border data-[active=true]:border-purple-200/50 dark:data-[active=true]:border-purple-700/50 menu-item-enhanced"
+                    >
+                      <div className="flex items-center gap-3 w-full">
+                        <div className="relative">
+                          <Settings className="h-5 w-5 transition-all duration-300 group-hover:text-purple-600 dark:group-hover:text-purple-400 group-hover:rotate-90" />
+                          {activeItem === 'widget-gen' && (
+                            <div className="absolute inset-0 bg-purple-500/20 rounded-full blur-sm animate-pulse"></div>
+                          )}
+                        </div>
+                        <span className="font-medium group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors duration-300">
+                          Widget Gen
+                        </span>
+                      </div>
+                      {activeItem === 'widget-gen' && (
+                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-purple-500 to-indigo-500 rounded-r-full active-indicator show"></div>
+                      )}
                     </SidebarMenuButton>
                   </Link>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton 
                     isActive={activeItem === 'dashboard-generator'}
-                    className="group relative overflow-hidden transition-all duration-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-cyan-50 dark:hover:from-blue-900/20 dark:hover:to-cyan-900/20 hover:shadow-md data-[active=true]:bg-gradient-to-r data-[active=true]:from-blue-100 data-[active=true]:to-cyan-100 dark:data-[active=true]:from-blue-900/30 dark:data-[active=true]:to-cyan-900/30 data-[active=true]:shadow-sm border-0 data-[active=true]:border data-[active=true]:border-blue-200/50 dark:data-[active=true]:border-blue-700/50"
+                    className="group relative overflow-hidden transition-all duration-300 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-teal-50 dark:hover:from-emerald-900/20 dark:hover:to-teal-900/20 hover:shadow-md hover:scale-105 data-[active=true]:bg-gradient-to-r data-[active=true]:from-emerald-100 data-[active=true]:to-teal-100 dark:data-[active=true]:from-emerald-900/30 dark:data-[active=true]:to-teal-900/30 data-[active=true]:shadow-sm border-0 data-[active=true]:border data-[active=true]:border-emerald-200/50 dark:data-[active=true]:border-emerald-700/50 menu-item-enhanced"
                   >
-                    <LayoutDashboard className="w-5 h-5" />
-                    Dashboard Gen
+                    <div className="flex items-center gap-3 w-full">
+                      <div className="relative">
+                        <LayoutDashboard className="h-5 w-5 transition-all duration-300 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 group-hover:scale-110" />
+                        {activeItem === 'dashboard-generator' && (
+                          <div className="absolute inset-0 bg-emerald-500/20 rounded-full blur-sm animate-pulse"></div>
+                        )}
+                      </div>
+                      <span className="font-medium group-hover:text-emerald-700 dark:group-hover:text-emerald-300 transition-colors duration-300">
+                        Dashboard Gen
+                      </span>
+                    </div>
                     {activeItem === 'dashboard-generator' && (
-                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 to-cyan-500 rounded-r-full"></div>
+                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-500 to-teal-500 rounded-r-full active-indicator show"></div>
                     )}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <Link href="/dashboard-loader">
-                    <SidebarMenuButton>
-                      <LayoutGrid className="w-5 h-5" />
-                      Load Dashboard
+                    <SidebarMenuButton
+                      isActive={activeItem === 'dashboard-loader'}
+                      className="group relative overflow-hidden transition-all duration-300 hover:bg-gradient-to-r hover:from-amber-50 hover:to-orange-50 dark:hover:from-amber-900/20 dark:hover:to-orange-900/20 hover:shadow-md hover:scale-105 data-[active=true]:bg-gradient-to-r data-[active=true]:from-amber-100 data-[active=true]:to-orange-100 dark:data-[active=true]:from-amber-900/30 dark:data-[active=true]:to-orange-900/30 data-[active=true]:shadow-sm border-0 data-[active=true]:border data-[active=true]:border-amber-200/50 dark:data-[active=true]:border-amber-700/50 menu-item-enhanced"
+                    >
+                      <div className="flex items-center gap-3 w-full">
+                        <div className="relative">
+                          <LayoutGrid className="h-5 w-5 transition-all duration-300 group-hover:text-amber-600 dark:group-hover:text-amber-400 group-hover:rotate-12" />
+                          {activeItem === 'dashboard-loader' && (
+                            <div className="absolute inset-0 bg-amber-500/20 rounded-full blur-sm animate-pulse"></div>
+                          )}
+                        </div>
+                        <span className="font-medium group-hover:text-amber-700 dark:group-hover:text-amber-300 transition-colors duration-300">
+                          Load Dashboard
+                        </span>
+                      </div>
+                      {activeItem === 'dashboard-loader' && (
+                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-500 to-orange-500 rounded-r-full active-indicator show"></div>
+                      )}
                     </SidebarMenuButton>
                   </Link>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <Link href="/my-dashboards">
-                    <SidebarMenuButton>
-                      <LayoutDashboard className="w-5 h-5" />
-                      My Dashboards
+                    <SidebarMenuButton
+                      isActive={activeItem === 'my-dashboards'}
+                      className="group relative overflow-hidden transition-all duration-300 hover:bg-gradient-to-r hover:from-rose-50 hover:to-pink-50 dark:hover:from-rose-900/20 dark:hover:to-pink-900/20 hover:shadow-md hover:scale-105 data-[active=true]:bg-gradient-to-r data-[active=true]:from-rose-100 data-[active=true]:to-pink-100 dark:data-[active=true]:from-rose-900/30 dark:data-[active=true]:to-pink-900/30 data-[active=true]:shadow-sm border-0 data-[active=true]:border data-[active=true]:border-rose-200/50 dark:data-[active=true]:border-rose-700/50 menu-item-enhanced"
+                    >
+                      <div className="flex items-center gap-3 w-full">
+                        <div className="relative">
+                          <LayoutDashboard className="h-5 w-5 transition-all duration-300 group-hover:text-rose-600 dark:group-hover:text-rose-400 group-hover:scale-110" />
+                          {activeItem === 'my-dashboards' && (
+                            <div className="absolute inset-0 bg-rose-500/20 rounded-full blur-sm animate-pulse"></div>
+                          )}
+                        </div>
+                        <span className="font-medium group-hover:text-rose-700 dark:group-hover:text-rose-300 transition-colors duration-300">
+                          My Dashboards
+                        </span>
+                      </div>
+                      {activeItem === 'my-dashboards' && (
+                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-rose-500 to-pink-500 rounded-r-full active-indicator show"></div>
+                      )}
                     </SidebarMenuButton>
                   </Link>
                 </SidebarMenuItem>
