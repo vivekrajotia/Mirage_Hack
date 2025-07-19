@@ -10,6 +10,7 @@
     "start": "next start",
     "lint": "next lint",
     "db:setup": "node -r ts-node/register src/lib/db/setup.ts",
+    "db:setup-dashboards": "node -r ts-node/register src/lib/db/setup-dashboards.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
