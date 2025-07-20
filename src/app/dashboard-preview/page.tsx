@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Responsive, WidthProvider } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
@@ -12,6 +12,7 @@ import { processPreviewData } from '@/components/graph-engine/graph-engine-examp
 import { DataTable } from '@/components/dashboard/data-table';
 import { useToast } from '@/hooks/use-toast';
 import ToastBanner from '@/components/toast-banner';
+import LoadingPage from '@/components/loading-page';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -22,7 +23,7 @@ interface Widget {
   config: any;
 }
 
-const DashboardPreview = () => {
+const DashboardPreviewContent = () => {
   const searchParams = useSearchParams();
   const [dashboardName, setDashboardName] = useState('');
   const [widgets, setWidgets] = useState<Widget[]>([]);
@@ -171,6 +172,14 @@ const DashboardPreview = () => {
         />
       )}
     </div>
+  );
+};
+
+const DashboardPreview = () => {
+  return (
+    <Suspense fallback={<LoadingPage onLoadingComplete={() => {}} />}>
+      <DashboardPreviewContent />
+    </Suspense>
   );
 };
 
