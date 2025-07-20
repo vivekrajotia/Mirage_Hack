@@ -679,7 +679,7 @@ export const DashboardClient = React.forwardRef<
   const visibleChartWidgets = visibleWidgets.filter(w => w.component === 'chart');
 
   return (
-    <div className="flex flex-col gap-6 relative">
+    <div className="flex flex-col gap-6 relative max-w-full overflow-x-hidden">
       {/* Dashboard Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -738,7 +738,7 @@ export const DashboardClient = React.forwardRef<
             </CollapsibleTrigger>
           </div>
           <CollapsibleContent className="space-y-4">
-            <SimpleResizableGrid className="h-auto">
+            <SimpleResizableGrid className="h-auto" gap={12}>
               {visibleMetricWidgets.map((widget) => {
                 let value: string | number = '';
                 let subtitle = '';
@@ -807,7 +807,7 @@ export const DashboardClient = React.forwardRef<
             </CollapsibleTrigger>
           </div>
           <CollapsibleContent className="space-y-4">
-            <SimpleResizableGrid className="h-auto">
+            <SimpleResizableGrid className="h-auto w-full max-w-full">
               {visibleChartWidgets.map((widget) => {
                 let chartContent: React.ReactNode = null;
                 
@@ -1458,7 +1458,7 @@ export const DashboardClient = React.forwardRef<
       )}
 
 
-      <Card>
+      <Card className="w-full max-w-full overflow-hidden">
         <CardHeader>
             <CardTitle>Trade History</CardTitle>
         </CardHeader>

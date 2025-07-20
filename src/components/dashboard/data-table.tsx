@@ -100,14 +100,29 @@ export function DataTable<TData, TValue>({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <div className="rounded-md border">
-        <Table>
+      {/* Add horizontal scroll container with fixed width */}
+      <div 
+        className="rounded-md border bg-white horizontal-scroll-container"
+        style={{ 
+          width: '100%', 
+          maxWidth: 'calc(100vw - 200px)', // Ensure it's smaller than viewport
+          overflowX: 'auto',
+          overflowY: 'visible',
+          scrollbarWidth: 'thin', // Firefox
+          scrollbarColor: '#888 #f1f1f1' // Firefox
+        }}
+      >
+        <Table style={{ minWidth: '2000px', width: 'max-content' }}>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id}>
+                    <TableHead 
+                      key={header.id} 
+                      className="whitespace-nowrap px-4"
+                      style={{ minWidth: '180px' }}
+                    >
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -128,7 +143,11 @@ export function DataTable<TData, TValue>({
                   data-state={row.getIsSelected() && 'selected'}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
+                    <TableCell 
+                      key={cell.id} 
+                      className="whitespace-nowrap px-4"
+                      style={{ minWidth: '180px' }}
+                    >
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext()

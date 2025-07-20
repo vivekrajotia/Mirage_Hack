@@ -87,9 +87,9 @@ export function SimpleResizableGrid({
         <SimpleResizableWidget
           key={index}
           className="flex-grow"
-          initialWidth="300px"
-          minWidth={250}
-          maxWidth={600}
+          initialWidth="220px"
+          minWidth={180}
+          maxWidth={280}
         >
           {child}
         </SimpleResizableWidget>

@@ -689,9 +689,19 @@ The chart visualizes ${graphRequest.yAxis?.join(', ') || 'key metrics'} across $
                     {isTableOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                   </CollapsibleTrigger>
                   <CollapsibleContent>
-                    <div className="h-60 mt-2 border rounded-md overflow-auto">
-                      <div className="min-w-max">
-                        <Table>
+                    <div 
+                      className="h-60 mt-2 border rounded-md bg-white horizontal-scroll-container"
+                      style={{ 
+                        width: '100%', 
+                        maxWidth: 'calc(100vw - 250px)',
+                        overflowX: 'auto',
+                        overflowY: 'auto',
+                        scrollbarWidth: 'thin',
+                        scrollbarColor: '#94a3b8 #f1f5f9'
+                      }}
+                    >
+                      <div style={{ minWidth: 'max-content', width: 'max-content' }}>
+                        <Table style={{ minWidth: '800px' }}>
                           <TableHeader>
                             <TableRow>
                               {selectedColumns.map(column => (

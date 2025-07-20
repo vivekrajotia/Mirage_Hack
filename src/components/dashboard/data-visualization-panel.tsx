@@ -1074,9 +1074,9 @@ export function DataVisualizationPanel({ data, isVisible, onClose }: DataVisuali
           </DialogTitle>
         </DialogHeader>
         
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 h-[80vh]">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 h-[80vh] max-w-full overflow-x-hidden">
           {/* Left Panel - Chart Types and Options */}
-          <div className="space-y-4">
+          <div className="space-y-4 max-w-full overflow-x-auto">
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm">Chart Type</CardTitle>
@@ -1321,7 +1321,7 @@ export function DataVisualizationPanel({ data, isVisible, onClose }: DataVisuali
           </div>
 
           {/* Right Panel - Chart Display */}
-          <div className="lg:col-span-3 space-y-4">
+          <div className="lg:col-span-3 space-y-4 max-w-full overflow-x-auto">
             <Card>
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
@@ -1359,9 +1359,11 @@ export function DataVisualizationPanel({ data, isVisible, onClose }: DataVisuali
                   />
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="w-full max-w-full overflow-x-auto">
                 {error && <ToastBanner type="error" message={error} onClose={() => setError(null)} />}
-                {renderChart()}
+                <div className="min-w-max">
+                  {renderChart()}
+                </div>
               </CardContent>
             </Card>
           </div>

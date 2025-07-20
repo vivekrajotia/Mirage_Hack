@@ -75,7 +75,7 @@ export function MetricWidget({
       } ${!widget.visible ? 'opacity-60 grayscale' : ''}`}
     >
       {/* Drag Handle & Controls */}
-      <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
+      <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
         <Button
           variant="ghost"
           size="sm"
@@ -102,15 +102,15 @@ export function MetricWidget({
         </Button>
       </div>
 
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium pr-12">{widget.title}</CardTitle>
-        <Icon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-4 px-4">
+        <CardTitle className="text-xs font-medium pr-8">{widget.title}</CardTitle>
+        <Icon className="h-3 w-3 text-muted-foreground flex-shrink-0" />
       </CardHeader>
-      <CardContent>
-        <div className={`text-2xl font-bold ${valueColor}`}>
+      <CardContent className="px-4 pb-4">
+        <div className={`text-xl font-bold ${valueColor} leading-tight`}>
           {value}
         </div>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-muted-foreground mt-1 leading-tight">
           {subtitle}
         </p>
         {trend && (
