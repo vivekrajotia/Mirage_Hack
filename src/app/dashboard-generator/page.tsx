@@ -314,39 +314,7 @@ const DashboardGenerator = () => {
                   </Link>
                 </SidebarMenuItem>
 
-                <SidebarMenuItem>
-                  <Link href="/">
-                    <SidebarMenuButton 
-                      isActive={activeItem === 'settings'}
-                      tooltip="Dashboard Settings"
-                      className="group relative overflow-hidden transition-all duration-200 hover:bg-gradient-to-r hover:from-slate-50 hover:to-gray-50 dark:hover:from-slate-900/20 dark:hover:to-gray-900/20 hover:shadow-sm data-[active=true]:bg-gradient-to-r data-[active=true]:from-slate-100 data-[active=true]:to-gray-100 dark:data-[active=true]:from-slate-900/30 dark:data-[active=true]:to-gray-900/30 data-[active=true]:shadow-sm"
-                    >
-                      <div className="flex items-center gap-3 w-full">
-                        <Settings className="h-5 w-5 transition-colors group-hover:text-slate-600 dark:group-hover:text-slate-400" />
-                        <span className="font-medium group-hover:text-slate-700 dark:group-hover:text-slate-300">
-                          Settings
-                        </span>
-                      </div>
-                    </SidebarMenuButton>
-                  </Link>
-                </SidebarMenuItem>
 
-                <SidebarMenuItem>
-                  <Link href="/">
-                    <SidebarMenuButton 
-                      isActive={activeItem === 'support'}
-                      tooltip="Help & Support"
-                      className="group relative overflow-hidden transition-all duration-200 hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50 dark:hover:from-orange-900/20 dark:hover:to-amber-900/20 hover:shadow-sm data-[active=true]:bg-gradient-to-r data-[active=true]:from-orange-100 data-[active=true]:to-amber-100 dark:data-[active=true]:from-orange-900/30 dark:data-[active=true]:to-amber-900/30 data-[active=true]:shadow-sm"
-                    >
-                      <div className="flex items-center gap-3 w-full">
-                        <CircleHelp className="h-5 w-5 transition-colors group-hover:text-orange-600 dark:group-hover:text-orange-400" />
-                        <span className="font-medium group-hover:text-orange-700 dark:group-hover:text-orange-300">
-                          Support
-                        </span>
-                      </div>
-                    </SidebarMenuButton>
-                  </Link>
-                </SidebarMenuItem>
                 <SidebarMenuItem>
                   <Link href="/widgetGen/widgetGen">
                     <SidebarMenuButton
