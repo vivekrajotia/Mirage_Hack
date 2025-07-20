@@ -96,7 +96,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ eodDates }) => {
 
   return (
     <TooltipProvider>
-      <SidebarProvider>
+      <SidebarProvider collapsible="offcanvas">
         <Sidebar className="border-r-0 shadow-lg sidebar-enhanced">
           <SidebarHeader className="bg-gradient-to-b from-slate-50 to-white dark:from-slate-900 dark:to-slate-800 p-6 sidebar-header-enhanced">
             <div className="flex h-12 items-center gap-3">
