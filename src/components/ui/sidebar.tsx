@@ -53,6 +53,7 @@ const SidebarProvider = React.forwardRef<
     defaultOpen?: boolean
     open?: boolean
     onOpenChange?: (open: boolean) => void
+    collapsible?: "offcanvas" | "icon" | "none"
   }
 >(
   (
@@ -60,6 +61,7 @@ const SidebarProvider = React.forwardRef<
       defaultOpen = true,
       open: openProp,
       onOpenChange: setOpenProp,
+      collapsible = "offcanvas",
       className,
       style,
       children,
@@ -116,6 +118,14 @@ const SidebarProvider = React.forwardRef<
     // This makes it easier to style the sidebar with Tailwind classes.
     const state = open ? "expanded" : "collapsed"
 
+    // Dynamic sidebar width based on state and collapsible type
+    const dynamicSidebarWidth = React.useMemo(() => {
+      if (state === "collapsed") {
+        return collapsible === "icon" ? SIDEBAR_WIDTH_ICON : "0"
+      }
+      return SIDEBAR_WIDTH
+    }, [state, collapsible])
+
     const contextValue = React.useMemo<SidebarContext>(
       () => ({
         state,
@@ -135,7 +145,7 @@ const SidebarProvider = React.forwardRef<
           <div
             style={
               {
-                "--sidebar-width": SIDEBAR_WIDTH,
+                "--sidebar-width": dynamicSidebarWidth,
                 "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
                 ...style,
               } as React.CSSProperties
