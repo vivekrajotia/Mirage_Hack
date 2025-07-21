@@ -1,8 +1,20 @@
 import { Trade } from './types';
 import { FilterState } from '@/components/dashboard/filter-selector';
+import { getApiKey } from '@/components/ui/api-key-manager';
 
-const GEMINI_API_KEY =  'AIzaSyCGBg0bHeMOuSdi383Ge3oHDI1dV9kI7X0';
+const DEFAULT_GEMINI_API_KEY = 'AIzaSyCGBg0bHeMOuSdi383Ge3oHDI1dV9kI7X0';
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent';
+
+// Dynamic API key getter - uses custom key from localStorage if available, otherwise default
+const getGeminiApiKey = (): string => {
+  try {
+    return getApiKey();
+  } catch (error) {
+    // Fallback to default if there's any issue with getting the custom key
+    console.warn('Failed to get custom API key, using default:', error);
+    return DEFAULT_GEMINI_API_KEY;
+  }
+};
 
 interface DashboardContext {
   dashboardType: string;
@@ -128,7 +140,7 @@ export class AIInsightsService {
 
       const prompt = this.createChatPrompt(query, uniqueValues, availableData, dataAnalysis);
 
-      const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+      const response = await fetch(`${GEMINI_API_URL}?key=${getGeminiApiKey()}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -588,7 +600,7 @@ You can also ask questions like: "What's the performance?" or "Which trader is d
       const prompt = this.createInsightsPrompt(dataAnalysis, contextInfo);
       
       // Call Gemini API
-      const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+      const response = await fetch(`${GEMINI_API_URL}?key=${getGeminiApiKey()}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -632,7 +644,7 @@ You can also ask questions like: "What's the performance?" or "Which trader is d
       const uniqueValues = this.extractUniqueValues(availableData);
       const widgetPrompt = this.createWidgetGenerationPrompt(prompt, uniqueValues, availableData);
 
-      const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+      const response = await fetch(`${GEMINI_API_URL}?key=${getGeminiApiKey()}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -22,10 +22,22 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { GraphEngine } from '@/components/graph-engine/graph-engine';
 import { DataTableDisplay } from '@/components/data-table-display';
+import { ApiKeyManager, getApiKey } from '@/components/ui/api-key-manager';
 import tradingData from '@/app/xceler_eodservice_publisheddata (1).json';
 
-const GEMINI_API_KEY = 'AIzaSyBFqwV3wtZ7nt0LmqpzMdvE6XoAxK_yk8c';
+const DEFAULT_GEMINI_API_KEY = 'AIzaSyBFqwV3wtZ7nt0LmqpzMdvE6XoAxK_yk8c';
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent';
+
+// Dynamic API key getter - uses custom key from localStorage if available, otherwise default
+const getGeminiApiKey = (): string => {
+  try {
+    return getApiKey();
+  } catch (error) {
+    // Fallback to default if there's any issue with getting the custom key
+    console.warn('Failed to get custom API key, using default:', error);
+    return DEFAULT_GEMINI_API_KEY;
+  }
+};
 
 interface GenerateReportsProps {
   onBack: () => void;
@@ -649,6 +661,9 @@ The portfolio shows strong fundamentals with room for optimization. Implementati
               </p>
             </div>
           </div>
+          
+          {/* API Key Manager */}
+          <ApiKeyManager className="flex-shrink-0" />
         </div>
 
         <div className="grid lg:grid-cols-3 gap-6">

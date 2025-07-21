@@ -60,6 +60,7 @@ import { Badge } from '@/components/ui/badge';
 import { DashboardClient } from '@/components/dashboard/dashboard-client';
 import { AICanvas } from '@/components/ai-canvas';
 import ReportsPage from '@/components/reports-page';
+import { ApiKeyManager } from '@/components/ui/api-key-manager';
 import Link from 'next/link';
 
 interface DashboardPageProps {
@@ -359,6 +360,9 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ eodDates }) => {
                     <p>Open Data Visualization Panel</p>
                   </TooltipContent>
                 </Tooltip>
+
+                {/* API Key Manager */}
+                <ApiKeyManager className="flex-shrink-0" />
 
                 {/* AI Insights */}
                 <Tooltip>

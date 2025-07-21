@@ -50,6 +50,7 @@ import ReactECharts from 'echarts-for-react';
 import { Trade } from '@/lib/types';
 import { AIInsightsService } from '@/lib/ai-insights-service';
 import { FilterState } from '@/components/dashboard/filter-selector';
+import { ApiKeyManager } from '@/components/ui/api-key-manager';
 import { applyFilters } from '@/lib/filter-utils';
 import rawTrades from '@/app/xceler_eodservice_publisheddata (1).json';
 
@@ -612,6 +613,7 @@ The chart visualizes ${graphRequest.yAxis?.join(', ') || 'key metrics'} across $
               </span>
             </div>
             <div className="flex items-center gap-2 ml-auto">
+              <ApiKeyManager />
               <Badge variant="outline" className="text-xs">
                 {summary.totalTrades} trades
               </Badge>
