@@ -13,11 +13,11 @@ export async function POST(request: Request) {
   }
 
   const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || '',
-    port: parseInt(process.env.SMTP_PORT || '587', 10),
+    host: 'smtp.gmail.com',
+    port: 587,
     auth: {
-      user: process.env.SMTP_USER || '',
-      pass: process.env.SMTP_PASS || '',
+      user: 'monkstoned6@gmail.com',
+      pass: 'goni goim vxyw xrlr',
     },
   });
 
@@ -40,12 +40,8 @@ export async function POST(request: Request) {
   };
 
   const sendEmail = async () => {
-    try {
-      await transporter.sendMail(mailOptions);
-      console.log('Email sent:', mailOptions);
-    } catch (err: any) {
-      console.error('Failed to send email:', err);
-    }
+    await transporter.sendMail(mailOptions);
+    console.log('Email sent:', mailOptions);
   };
 
   if (scheduledTime && new Date(scheduledTime) > new Date()) {
